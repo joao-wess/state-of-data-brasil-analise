@@ -1,5 +1,6 @@
 # Ambiente Virtual
 venv/
+.venv/
 __pycache__/
 
 # Arquivos de IDE

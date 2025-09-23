@@ -1,0 +1,10 @@
+# Ambiente Virtual
+venv/
+__pycache__/
+
+# Arquivos de IDE
+.vscode/
+.idea/
+
+# Arquivos de sistema
+.DS_Store

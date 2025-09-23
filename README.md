@@ -19,21 +19,32 @@ cd analise_state_of_data
 ### 2. Criar e ativar ambiente virtual
 
 - Criar o ambiente
+
+  
 python -m venv .venv
 
 - Ativar o ambiente:
+
   
 - Linux/MacOS
+
+  
 source .venv/bin/activate
 
 - Windows (PowerShell)
+
+  
 .venv\Scripts\Activate
 
 ### 3. Instalar as dependências
 pip install -r requirements.txt
 
 - se precisar adicionar novas dependências
+
+  
 pip install nome-da-biblioteca
+
+
 pip freeze > requirements.txt
 
 ---

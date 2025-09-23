@@ -19,22 +19,19 @@ cd analise_state_of_data
 ### 2. Criar e ativar ambiente virtual
 
 - Criar o ambiente
-
-  
+```bash
 python -m venv .venv
+```
 
 - Ativar o ambiente:
-
-  
 - Linux/MacOS
-
-  
+```bash
 source .venv/bin/activate
-
+```
 - Windows (PowerShell)
-
-  
+```bash
 .venv\Scripts\Activate
+```
 
 ### 3. Instalar as dependências
 pip install -r requirements.txt
@@ -50,7 +47,7 @@ pip freeze > requirements.txt
 ---
 
 ## 🗂 Estrutura do Projeto
-
+```bash
 analise_state_of_data/
 ├── data/
 │ ├── raw/
@@ -65,7 +62,7 @@ analise_state_of_data/
 ├── dashboards/
 ├── .gitignore
 └── README.md
-
+``
 
 ### Explicação das pastas:
 

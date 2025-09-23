@@ -1,0 +1,88 @@
+# 📊 Projeto: Análise State of Data
+
+Este repositório contém a análise exploratória, tratamento e visualização dos datasets **State of Data (2021–2024)**.  
+Nosso objetivo é aplicar boas práticas de análise de dados usando Python, seguindo a metodologia **CRISP-DM** para estruturar o trabalho de ponta a ponta.
+
+---
+
+## 🚀 Preparando o Ambiente
+
+Antes de começar, todos devem configurar o ambiente da mesma forma.  
+Estamos utilizando **Python 3.12.3**.
+
+### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/<seu-usuario>/analise_state_of_data.git
+cd analise_state_of_data
+```
+### 2. Criar e ativar ambiente virtual
+
+- Criar o ambiente
+python -m venv .venv
+
+- Ativar o ambiente:
+  
+- Linux/MacOS
+source .venv/bin/activate
+
+- Windows (PowerShell)
+.venv\Scripts\Activate
+
+### 3. Instalar as dependências
+pip install -r requirements.txt
+
+- se precisar adicionar novas dependências
+pip install nome-da-biblioteca
+pip freeze > requirements.txt
+
+---
+
+## 🗂 Estrutura do Projeto
+
+analise_state_of_data/
+├── data/
+│ ├── raw/
+│ │ ├── State_of_data_2021.csv
+│ │ ├── State_of_data_2022.csv
+│ │ ├── State_of_data_2023.csv
+│ │ └── State_of_data_2024.csv
+│ └── processed/
+├── notebooks/
+├── src/
+│ └── utils/
+├── dashboards/
+├── .gitignore
+└── README.md
+
+
+### Explicação das pastas:
+
+- **`data/raw/`**  
+  Onde ficam os datasets originais, **sem nenhuma modificação**. Sempre preservamos a versão bruta para referência.
+
+- **`data/processed/`**  
+  Aqui serão salvos os datasets **limpos e tratados**, prontos para análise ou visualização.
+
+- **`notebooks/`**  
+  Espaço para exploração inicial com **Jupyter Notebooks**.  
+  Cada integrante pode ter seu próprio notebook ou criar notebooks separados por etapas, exemplo:  
+  - `01_exploracao_inicial.ipynb`  
+  - `02_limpeza_2021.ipynb`  
+  - `03_merge_final.ipynb`  
+
+- **`src/`**  
+  Pasta destinada ao **código fonte**.  
+  Se criarmos funções reutilizáveis (ex.: padronizar colunas de salários, remover nulos, etc.), elas ficarão aqui.
+
+- **`src/utils/`**  
+  Nossa "caixa de ferramentas". Guardaremos funções auxiliares que podem ser reaproveitadas em vários notebooks.
+
+- **`dashboards/`**  
+  Local para salvar imagens, configurações e arquivos gerados para o dashboard final.
+
+- **`README.md`**  
+  Este arquivo. Serve como guia inicial do projeto: objetivo, instalação e instruções de uso.
+
+- **`.gitignore`**  
+  Lista arquivos/pastas que não devem ser versionados pelo Git (ex.: ambiente virtual, cache, arquivos temporários, datasets muito grandes).

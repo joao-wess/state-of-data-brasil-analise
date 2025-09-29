@@ -1,0 +1,159 @@
+# Documentação Completa: Limpeza e Preparação do Dataset "State of Data 2024"
+
+**Autor:** [Seu Nome e da sua Equipe]
+
+**Data:** 29 de Setembro de 2025
+
+**Objetivo:** Detalhar o processo de transformação do dataset bruto `State_of_data_2024.csv` em um conjunto de dados limpo, estruturado e pronto para análise, com o intuito de facilitar a exploração de dados pela comunidade.
+
+---
+
+## 1. Contexto do Projeto
+
+O objetivo deste projeto é realizar uma análise longitudinal do mercado de dados no Brasil, utilizando as pesquisas **State of Data** de 2021 a 2024.
+
+Esta documentação foca no primeiro e mais recente dataset, o de 2024, que serviu como base para a criação de um pipeline de limpeza reutilizável.
+
+---
+
+## 2. Análise Preliminar do Dataset Bruto
+
+- **Arquivo Original:** `State_of_data_2024.csv`
+- **Dimensões:** 5217 linhas × 403 colunas
+
+### Desafios Identificados
+
+- **Nomes de Colunas Não Padronizados**
+  Colunas possuíam prefixos numéricos e nomes longos (ex: `2.h_faixa_salarial`), dificultando a manipulação.
+
+- **Dados Numéricos como Texto**
+  Colunas cruciais como salário e tempo de experiência estavam em formato de string (ex: `de R$ 4.001/mês a R$ 6.000/mês`), impedindo cálculos estatísticos.
+
+- **Respostas de Múltipla Escolha em uma Única Coluna**
+  Perguntas sobre ferramentas e linguagens continham múltiplas respostas separadas por vírgula em uma única string, necessitando parsing.
+
+- **Categorias Redundantes**
+  A coluna de cargos continha muitas variações e especificidades que poderiam ser agrupadas para uma análise mais clara.
+
+---
+
+## 3. Processo de Limpeza Detalhado
+
+O processo foi dividido em etapas lógicas, executadas sequencialmente.
+
+---
+
+### Etapa 1: Renomeação Estratégica de Colunas
+
+A primeira ação foi criar um dicionário Python (`mapa_renomeacao`) para traduzir os nomes das colunas mais importantes para um formato limpo e intuitivo (minúsculas, sem acentos, com `_` como separador).
+
+- **Objetivo:** Melhorar a legibilidade do código e padronizar os campos para a futura unificação com os datasets dos outros anos.
+
+**Exemplo em Python:**
+
+```python
+mapa_renomeacao = {
+    '1.a_idade': 'idade',
+    '2.h_faixa_salarial': 'faixa_salarial',
+    '2.f_cargo_atual': 'cargo_atual',
+    # ... e outras 50+ colunas mapeadas
+}
+df_2024_renomeado = df_2024.rename(columns=mapa_renomeacao)
+```
+
+---
+
+### Etapa 2: Transformação da Coluna de Salário
+
+A coluna `faixa_salarial` foi convertida para um formato numérico.
+
+- **Ação:** Foi desenvolvida a função `converter_faixa_salarial` para extrair os valores numéricos de cada faixa de texto e calcular a média.
+
+**Lógica da Função:**
+
+1. Recebe uma string (ex: `de R$ 4.001/mês a R$ 6.000/mês`).
+2. Padroniza o texto (minúsculas) e remove caracteres não numéricos (`R$`, `.`, `/mês`).
+3. Usa expressões regulares `re.findall(r'\d+', s)` para extrair números.
+4. Se dois números são encontrados, retorna a média. Se apenas um (ex: `Mais de 30001`), retorna o próprio número.
+
+- **Resultado:**
+  Criação da nova coluna `salario_medio_mensal` (`float64`), permitindo análises quantitativas.
+  Os 354 valores nulos foram mantidos como `NaN`.
+
+---
+
+### Etapa 3: Agrupamento e Limpeza de Cargos
+
+A coluna `cargo_atual` foi simplificada para facilitar a criação de filtros e visualizações.
+
+- **Ação:** A função `agrupar_cargo` foi criada para classificar os mais de 15 cargos específicos em 8 grupos principais (ex: _Analista de Dados_, _Engenheiro de Dados_, _Cientista de Dados_).
+
+- **Lógica da Função:**
+  Usa condicionais (`if 'cientista de dados' in cargo:`) para verificar palavras-chave e atribuir o grupo correspondente.
+
+- **Resultado:**
+  Criação da nova coluna categórica `grupo_cargo`.
+
+- **Insight Adicional:**
+  A maioria dos 1399 valores nulos correspondia a profissionais empregados em outras áreas.
+  Assim, a categoria nula foi renomeada para **“Não se aplica / Outra área”**, transformando um dado faltante em uma categoria informativa.
+
+---
+
+### Etapa 4: Transformação da Coluna de Experiência
+
+A coluna `experiencia_dados_anos` foi convertida para formato numérico.
+
+- **Ação:** Criada a função `converter_experiencia_anos`, utilizando um dicionário para mapear as 7 categorias fixas para valores representativos.
+
+- **Lógica da Função:**
+  Um dicionário mapeia cada resposta para um número (ex:
+  `de 1 a 2 anos` → `1.5`,
+  `Mais de 10 anos` → `12.0`).
+
+  Essa abordagem foi preferida ao Regex, já que as categorias eram fixas.
+
+- **Resultado:**
+  Criação da nova coluna numérica `experiencia_anos_num` (`float64`).
+
+---
+
+### Etapa 5: Tratamento de Colunas de Multiseleção
+
+Colunas como `linguagens_usadas_dia_a_dia`, com múltiplas respostas em uma única string, foram tratadas com **One-Hot Encoding**.
+
+- **Ação:** Utilizado o método `str.get_dummies(sep=', ')` do Pandas.
+
+- **Lógica do Método:**
+
+  1. Separa a string em lista de itens (delimitador `,`).
+  2. Cria uma nova coluna para cada item único (Python, SQL, R, etc.).
+  3. Preenche com `1` se a opção foi selecionada, e `0` caso contrário.
+
+- **Resultado:**
+  A coluna de texto virou ~16 colunas binárias (ex: `usa_python`, `usa_sql`).
+
+  Isso permite análises como:
+
+  ```python
+  df['usa_python'].sum()
+  ```
+
+  → Conta todos os usuários de Python, ou permite calcular salário médio por ferramenta.
+
+---
+
+## 4. Salvamento e Próximos Passos
+
+- **Ação Final:** O DataFrame final, limpo e enriquecido, foi salvo na pasta de dados processados.
+- **Arquivo Gerado:** `state_of_data_2024_limpo.csv`
+
+### Conclusão
+
+O dataset está agora robusto e pronto para:
+
+- análises exploratórias,
+- visualizações,
+- servir de base para a limpeza dos datasets dos anos anteriores.
+
+Este processo documentado garante **reprodutibilidade** e **transparência** da análise.

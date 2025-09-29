@@ -1,5 +1,3 @@
-Claro! Aqui está a lista de perguntas e a seção de recomendações de análise formatada em Markdown.
-
 # Análise do Mercado de Dados (2021-2024)
 
 ## Lista de Questões para Investigação

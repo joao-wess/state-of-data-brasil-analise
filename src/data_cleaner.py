@@ -1,6 +1,20 @@
 import pandas as pd
 import numpy as np
 import re
+from pathlib import Path
+
+#funçao para o caminho
+def caminho_para_dataset():
+  """
+  Calcula e retorna os caminhos para as pastas de dados raw e processed.
+  Assume que o script está sendo executado a partir da pasta 'notebooks'.
+  """
+  BASE_DIR = Path.cwd().parent
+  RAW_DATA_DIR = BASE_DIR / 'data' / 'raw'
+  PROCESSED_DATA_DIR = BASE_DIR / 'data' / 'processed'
+
+  return RAW_DATA_DIR, PROCESSED_DATA_DIR
+
 
 def converter_faixa_salarial(faixa):
   """
@@ -33,7 +47,7 @@ def agrupar_cargo(cargo):
     return 'Analista de Dados'
   if 'cientista de dados' in cargo or 'data scientist' in cargo:
     return 'Cientista de Dados'
-  if 'engenheiro de dados' in cargo or 'data engineer' in cargo or 'arquiteto de dados' in cargo or 'data architect' in cargo:
+  if 'engenheiro de dados' in cargo or 'data engineer' in cargo or 'arquiteto de dados' in cargo or 'data architect' in cargo or 'dba' in cargo or 'administrador de banco de dados' in cargo:
     return 'Engenheiro de Dados'
   if 'analista de bi' in cargo or 'bi analyst' in cargo:
     return 'Analista de BI'

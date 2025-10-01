@@ -75,9 +75,12 @@ def converter_experiencia(experiencia_texto):
     'Não tenho experiência na área de dados': 0,
     'Menos de 1 ano': 0.5,
     'de 1 a 2 anos': 1.5,
+    'de 2 a 3 anos': 2.5, #linha adicionada para o dataset 2021
     'de 3 a 4 anos': 3.5,
+    'de 4 a 5 anos': 4.5, #linha adicionada para o dataset 2021
     'de 4 a 6 anos': 5.0, #linha adicionada para o dataset 2023
     'de 5 a 6 anos': 5.5,
+    'de 6 a 10 anos': 8, #linha adicionada para o dataset 2021
     'de 7 a 10 anos': 8.5,
     'Mais de 10 anos': 12.0
     }

@@ -10,7 +10,7 @@
 
 ### Remuneração e Equidade
 
-4. Evolução do salário médio entre 2021 e 2024 (por ano e por cargo)?
+4. Evolução do salário médio entre 2021 e 2024 (por ano, por cargo e por senioridade)?
 5. Existe diferença salarial por gênero (gender pay gap) no conjunto de respondentes?
 6. Que faixas salariais são mais comuns por cargo (junior / pleno / sênior)?
 7. Há diferenças regionais (por estado) em salário e nível de senioridade?

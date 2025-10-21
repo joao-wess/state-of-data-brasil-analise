@@ -1,0 +1,41 @@
+ano,nivel_hierarquico,genero,salario_medio,salario_mediana,contagem
+2021,Júnior,Feminino,4149.79,3500.5,144
+2021,Júnior,Masculino,3793.73,3500.5,474
+2021,Júnior,Outro,3833.83,5000.5,3
+2021,Pleno,Feminino,7492.87,7000.5,131
+2021,Pleno,Masculino,7591.93,7000.5,525
+2021,Pleno,Outro,20000.5,20000.5,2
+2021,Sênior,Feminino,10612.2,10000.5,94
+2021,Sênior,Masculino,12749.48,10000.5,484
+2022,Júnior,Feminino,3972.92,3500.5,272
+2022,Júnior,Masculino,3926.46,3500.5,743
+2022,Júnior,Prefiro não informar,3000.38,2000.5,4
+2022,Pleno,Feminino,7681.86,7000.5,295
+2022,Pleno,Masculino,8069.58,7000.5,760
+2022,Pleno,Prefiro não informar,7625.5,8500.5,4
+2022,Sênior,Feminino,11168.95,10000.5,187
+2022,Sênior,Masculino,13288.24,10000.5,709
+2022,Sênior,Prefiro não informar,10000.5,10000.5,1
+2023,Júnior,Feminino,3706.17,3500.5,299
+2023,Júnior,Masculino,4001.23,3500.5,743
+2023,Júnior,Outro,1500.5,1500.5,1
+2023,Júnior,Prefiro não informar,5833.83,7000.5,3
+2023,Pleno,Feminino,7464.89,7000.5,337
+2023,Pleno,Masculino,7564.01,7000.5,1047
+2023,Pleno,Outro,6125.5,6000.5,4
+2023,Pleno,Prefiro não informar,6750.5,6000.5,4
+2023,Sênior,Feminino,12355.56,10000.5,307
+2023,Sênior,Masculino,13863.08,14000.5,1106
+2023,Sênior,Outro,8500.5,8500.5,2
+2023,Sênior,Prefiro não informar,31000.62,35000.5,4
+2024,Júnior,Feminino,4161.64,3500.5,242
+2024,Júnior,Masculino,4118.46,3500.5,623
+2024,Júnior,Prefiro não informar,14667.33,2500.5,3
+2024,Pleno,Feminino,7817.44,7000.5,366
+2024,Pleno,Masculino,8135.19,7000.5,1006
+2024,Pleno,Outro,7000.5,7000.5,2
+2024,Pleno,Prefiro não informar,8000.5,7000.5,3
+2024,Sênior,Feminino,12513.94,10000.5,335
+2024,Sênior,Masculino,15059.1,14000.5,1229
+2024,Sênior,Outro,9000.5,10000.5,3
+2024,Sênior,Prefiro não informar,15250.58,10000.5,6

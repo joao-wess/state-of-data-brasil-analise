@@ -1,0 +1,29 @@
+ano,nivel_ensino_cat,salario_medio,salario_mediana,contagem
+2021,Não tenho graduação formal,10118.16,7000.5,51
+2021,Estudante de Graduação,3963.68,2500.5,299
+2021,Graduação/Bacharelado,8387.85,7000.5,830
+2021,Pós-graduação,10504.36,10000.5,778
+2021,Mestrado,13204.1,10000.5,307
+2021,Doutorado ou Phd,12701.55,10000.5,97
+2021,Prefiro não informar,6333.83,2500.5,3
+2022,Não tenho graduação formal,7756.43,5000.5,84
+2022,Estudante de Graduação,4108.39,3500.5,468
+2022,Graduação/Bacharelado,8706.45,7000.5,1328
+2022,Pós-graduação,11125.6,10000.5,1219
+2022,Mestrado,13943.7,10000.5,440
+2022,Doutorado ou Phd,13873.8,10000.5,146
+2022,Prefiro não informar,2889.33,2500.5,9
+2023,Não tenho graduação formal,8843.88,5000.5,83
+2023,Estudante de Graduação,4471.45,3500.5,532
+2023,Graduação/Bacharelado,9187.58,7000.5,1641
+2023,Pós-graduação,11787.4,10000.5,1701
+2023,Mestrado,14083.85,10000.5,606
+2023,Doutorado ou Phd,14766.82,14000.5,184
+2023,Prefiro não informar,10250.42,7500.5,6
+2024,Não tenho graduação formal,9032.95,7000.5,77
+2024,Estudante de Graduação,4736.26,3500.5,492
+2024,Graduação/Bacharelado,10538.52,10000.5,1618
+2024,Pós-graduação,13419.06,10000.5,1860
+2024,Mestrado,16108.59,14000.5,620
+2024,Doutorado ou Phd,15115.1,14000.5,192
+2024,Prefiro não informar,16500.5,12500.5,4

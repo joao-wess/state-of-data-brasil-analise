@@ -1,0 +1,83 @@
+ano,nivel_hierarquico,nivel_ensino_cat,salario_medio,salario_mediana,contagem
+2021,Júnior,Não tenho graduação formal,3821.89,3500.5,14
+2021,Júnior,Estudante de Graduação,2654.12,2500.5,205
+2021,Júnior,Graduação/Bacharelado,4161.43,3500.5,233
+2021,Júnior,Pós-graduação,4929.07,3500.5,105
+2021,Júnior,Mestrado,4750.5,5000.5,46
+2021,Júnior,Doutorado ou Phd,6188.0,5000.5,16
+2021,Júnior,Prefiro não informar,2500.5,2500.5,2
+2021,Pleno,Não tenho graduação formal,6556.06,5000.5,9
+2021,Pleno,Estudante de Graduação,5658.82,5000.5,60
+2021,Pleno,Graduação/Bacharelado,7492.0,7000.5,294
+2021,Pleno,Pós-graduação,7378.67,7000.5,197
+2021,Pleno,Mestrado,9799.21,7000.5,77
+2021,Pleno,Doutorado ou Phd,9429.07,7000.5,21
+2021,Sênior,Não tenho graduação formal,18115.92,14000.5,13
+2021,Sênior,Estudante de Graduação,10767.17,10000.5,15
+2021,Sênior,Graduação/Bacharelado,11303.63,10000.5,160
+2021,Sênior,Pós-graduação,11523.15,10000.5,265
+2021,Sênior,Mestrado,15553.72,14000.5,94
+2021,Sênior,Doutorado ou Phd,14433.83,14000.5,30
+2021,Sênior,Prefiro não informar,14000.5,14000.5,1
+2022,Júnior,Não tenho graduação formal,2894.35,2500.5,33
+2022,Júnior,Estudante de Graduação,2820.98,2500.5,312
+2022,Júnior,Graduação/Bacharelado,4253.45,3500.5,423
+2022,Júnior,Pós-graduação,4896.33,5000.5,168
+2022,Júnior,Mestrado,4672.38,4250.5,64
+2022,Júnior,Doutorado ou Phd,5972.72,5000.5,18
+2022,Júnior,Prefiro não informar,3000.5,2500.5,5
+2022,Pleno,Não tenho graduação formal,7705.07,7000.5,22
+2022,Pleno,Estudante de Graduação,5435.28,5000.5,92
+2022,Pleno,Graduação/Bacharelado,7847.29,7000.5,421
+2022,Pleno,Pós-graduação,7861.61,7000.5,360
+2022,Pleno,Mestrado,10295.78,10000.5,127
+2022,Pleno,Doutorado ou Phd,9100.5,10000.5,35
+2022,Pleno,Prefiro não informar,3333.83,3500.5,3
+2022,Sênior,Não tenho graduação formal,14400.55,12000.5,10
+2022,Sênior,Estudante de Graduação,8929.07,10000.5,42
+2022,Sênior,Graduação/Bacharelado,12829.94,10000.5,299
+2022,Sênior,Pós-graduação,12068.69,10000.5,374
+2022,Sênior,Mestrado,15430.96,14000.5,115
+2022,Sênior,Doutorado ou Phd,15675.96,14000.5,57
+2022,Sênior,Prefiro não informar,1000.0,1000.0,1
+2023,Júnior,Não tenho graduação formal,2283.07,2500.5,23
+2023,Júnior,Estudante de Graduação,2784.59,2500.5,324
+2023,Júnior,Graduação/Bacharelado,4325.91,3500.5,421
+2023,Júnior,Pós-graduação,4690.15,5000.5,203
+2023,Júnior,Mestrado,5000.49,5000.5,58
+2023,Júnior,Doutorado ou Phd,4800.47,5000.5,15
+2023,Júnior,Prefiro não informar,5000.5,5000.5,2
+2023,Pleno,Não tenho graduação formal,6704.2,5000.5,27
+2023,Pleno,Estudante de Graduação,5935.61,5000.5,131
+2023,Pleno,Graduação/Bacharelado,7396.66,7000.5,573
+2023,Pleno,Pós-graduação,7651.85,7000.5,446
+2023,Pleno,Mestrado,8648.76,10000.5,172
+2023,Pleno,Doutorado ou Phd,9232.21,10000.5,41
+2023,Pleno,Prefiro não informar,5500.25,5500.25,2
+2023,Sênior,Não tenho graduação formal,14583.86,14000.5,18
+2023,Sênior,Estudante de Graduação,10878.55,10000.5,41
+2023,Sênior,Graduação/Bacharelado,13365.56,10000.5,452
+2023,Sênior,Pós-graduação,13007.84,10000.5,614
+2023,Sênior,Mestrado,15484.3,14000.5,216
+2023,Sênior,Doutorado ou Phd,15199.23,14000.5,78
+2024,Júnior,Não tenho graduação formal,3500.43,2500.5,23
+2024,Júnior,Estudante de Graduação,2850.97,2500.5,301
+2024,Júnior,Graduação/Bacharelado,4478.82,5000.5,346
+2024,Júnior,Pós-graduação,5143.83,5000.5,150
+2024,Júnior,Mestrado,6270.77,5000.5,37
+2024,Júnior,Doutorado ou Phd,8500.45,5000.5,10
+2024,Júnior,Prefiro não informar,40001.0,40001.0,1
+2024,Pleno,Não tenho graduação formal,7269.71,7000.5,26
+2024,Pleno,Estudante de Graduação,6667.17,5000.5,129
+2024,Pleno,Graduação/Bacharelado,7847.57,7000.5,546
+2024,Pleno,Pós-graduação,8090.82,7000.5,465
+2024,Pleno,Mestrado,9816.96,10000.5,158
+2024,Pleno,Doutorado ou Phd,8392.65,10000.5,51
+2024,Pleno,Prefiro não informar,4000.25,4000.25,2
+2024,Sênior,Não tenho graduação formal,13100.5,10000.5,15
+2024,Sênior,Estudante de Graduação,10271.93,10000.5,35
+2024,Sênior,Graduação/Bacharelado,14396.78,14000.5,482
+2024,Sênior,Pós-graduação,14004.74,14000.5,708
+2024,Sênior,Mestrado,16206.27,14000.5,243
+2024,Sênior,Doutorado ou Phd,16309.51,14000.5,89
+2024,Sênior,Prefiro não informar,18000.5,18000.5,1

@@ -1,0 +1,73 @@
+ano,regiao_residencia,nivel_hierarquico,salario_medio,salario_mediana,contagem
+2021,Centro-oeste,Júnior,4571.9,3500.5,42
+2021,Centro-oeste,Pleno,8451.72,7000.5,41
+2021,Centro-oeste,Sênior,13392.17,14000.5,60
+2021,Exterior,Júnior,6278.28,5000.5,9
+2021,Exterior,Pleno,16591.41,18000.5,11
+2021,Exterior,Sênior,27107.75,35000.5,14
+2021,Nordeste,Júnior,3518.53,3500.5,83
+2021,Nordeste,Pleno,7058.47,7000.5,69
+2021,Nordeste,Sênior,9930.73,10000.5,43
+2021,Norte,Júnior,4333.75,3000.5,6
+2021,Norte,Pleno,4955.0,5000.5,11
+2021,Norte,Sênior,6500.5,7000.5,3
+2021,Sudeste,Júnior,3742.09,3500.5,387
+2021,Sudeste,Pleno,7644.59,7000.5,406
+2021,Sudeste,Sênior,11977.96,10000.5,377
+2021,Sul,Júnior,4176.02,3500.5,94
+2021,Sul,Pleno,6942.17,7000.5,120
+2021,Sul,Sênior,12630.14,10000.5,81
+2022,Centro-oeste,Júnior,4031.72,3000.5,64
+2022,Centro-oeste,Pleno,8182.32,7000.5,55
+2022,Centro-oeste,Sênior,13854.16,14000.5,41
+2022,Nordeste,Júnior,3600.48,2500.5,155
+2022,Nordeste,Pleno,7218.99,7000.5,119
+2022,Nordeste,Sênior,11563.8,10000.5,79
+2022,Norte,Júnior,3364.09,3500.5,22
+2022,Norte,Pleno,8222.75,7000.5,18
+2022,Norte,Sênior,11500.5,10000.5,8
+2022,Não informado,Júnior,11750.5,6000.5,8
+2022,Não informado,Pleno,15357.66,10000.5,28
+2022,Não informado,Sênior,22577.52,18000.5,26
+2022,Sudeste,Júnior,3970.31,3500.5,613
+2022,Sudeste,Pleno,7755.52,7000.5,647
+2022,Sudeste,Sênior,12734.33,10000.5,603
+2022,Sul,Júnior,3733.41,3500.5,161
+2022,Sul,Pleno,7951.28,7000.5,193
+2022,Sul,Sênior,12046.61,10000.5,141
+2023,Centro-oeste,Júnior,4099.18,3500.5,76
+2023,Centro-oeste,Pleno,7994.25,7000.5,80
+2023,Centro-oeste,Sênior,14242.26,14000.5,91
+2023,Nordeste,Júnior,3443.74,3500.5,141
+2023,Nordeste,Pleno,6676.09,7000.5,168
+2023,Nordeste,Sênior,13405.48,14000.5,121
+2023,Norte,Júnior,4571.88,5000.5,21
+2023,Norte,Pleno,6222.72,7000.5,27
+2023,Norte,Sênior,12150.5,10000.5,10
+2023,Não informado,Júnior,6625.45,6000.5,20
+2023,Não informado,Pleno,15708.83,14000.5,24
+2023,Não informado,Sênior,23364.23,22500.5,33
+2023,Sudeste,Júnior,3899.73,3500.5,590
+2023,Sudeste,Pleno,7572.99,7000.5,807
+2023,Sudeste,Sênior,13323.48,10000.5,901
+2023,Sul,Júnior,3907.05,3500.5,198
+2023,Sul,Pleno,7234.77,7000.5,286
+2023,Sul,Sênior,13124.09,10000.5,263
+2024,Centro-oeste,Júnior,4500.47,2500.5,71
+2024,Centro-oeste,Pleno,7082.02,7000.5,92
+2024,Centro-oeste,Sênior,14532.96,14000.5,77
+2024,Nordeste,Júnior,3641.98,2500.5,106
+2024,Nordeste,Pleno,7344.46,7000.5,141
+2024,Nordeste,Sênior,14551.7,14000.5,127
+2024,Norte,Júnior,3250.47,2500.5,16
+2024,Norte,Pleno,7600.5,7000.5,15
+2024,Norte,Sênior,14711.03,14000.5,19
+2024,Não informado,Júnior,11867.2,10000.5,15
+2024,Não informado,Pleno,18371.47,18000.5,31
+2024,Não informado,Sênior,23235.26,22500.5,49
+2024,Sudeste,Júnior,4111.6,3500.5,477
+2024,Sudeste,Pleno,8109.93,7000.5,795
+2024,Sudeste,Sênior,14552.32,14000.5,965
+2024,Sul,Júnior,3934.91,3500.5,183
+2024,Sul,Pleno,7475.75,7000.5,303
+2024,Sul,Sênior,13065.98,10000.5,336

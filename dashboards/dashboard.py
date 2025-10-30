@@ -70,3 +70,24 @@ if df_kpi_salario_geral is not None:
     kpi_col1.error("Ano 2024 ou 2022 não encontrado nos dados do KPI.")
   except Exception as e:
     kpi_col1.error(f"Erro KPI Salário Mediano: {e}")
+
+
+# KPI 2: % de Trabalho Remoto em 2024 vs 2023
+if df_modelo_trabalho_pct is not None:
+  try:
+    df_modelo_trabalho_pct_idx = df_modelo_trabalho_pct.set_index('ano')
+
+    remoto_2024 = df_modelo_trabalho_pct_idx.loc[2024, 'Remoto']
+
+    #calcular a diferença com o de 2023
+    if 2023 in df_modelo_trabalho_pct_idx.index:
+      remoto_2023 = df_modelo_trabalho_pct_idx.loc[2023, 'Remoto']
+      delta_remoto = remoto_2024 - remoto_2023
+      delta_texto = f"{delta_remoto:.1f}% vs 2023"
+
+    kpi_col2.metric("% Trabalho Remoto (2024)", f"{remoto_2024:.1f}%", delta=delta_texto)
+
+  except KeyError:
+    kpi_col2.error(f"Coluna 'Remoto' ou Ano não encontrado ({e}). Verifique o CSV.")
+  except Exception as e:
+    kpi_col2.error(f"Erro KPI Remoto: {e}")

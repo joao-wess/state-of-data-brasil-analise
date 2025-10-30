@@ -91,3 +91,39 @@ if df_modelo_trabalho_pct is not None:
     kpi_col2.error(f"Coluna 'Remoto' ou Ano não encontrado ({e}). Verifique o CSV.")
   except Exception as e:
     kpi_col2.error(f"Erro KPI Remoto: {e}")
+
+
+# KPI 3: 
+if df_pop_linguagens_pct is not None:
+  try:
+    df_pop_linguagens_pct_idx = df_pop_linguagens_pct.set_index('ano')
+
+    linguagens_2024 = df_pop_linguagens_pct_idx.loc[2024]
+
+    top_linguagem_2024 = linguagens_2024.idxmax()
+    percent_top_linguagem_2024 = linguagens_2024.max()
+    
+    #limpeza do nome
+    nome_limpo = top_linguagem_2024.replace('usa_linguagem_', '').replace('_', ' ').upper()
+    if nome_limpo == 'C C++ C#':
+      nome_limpo = 'C/C++/C#'
+
+    #delta
+    if 2023 in df_pop_linguagens_pct_idx.index:
+      percent_top_linguagem_2023 = df_pop_linguagens_pct_idx.loc[2023, top_linguagem_2024]
+      delta_linguagem = percent_top_linguagem_2024 - percent_top_linguagem_2023
+      delta_texto = f'{delta_linguagem:.2f}% p.p vs 2023' #p.p significa pontos percentuais
+
+    #exibir
+    kpi_col3.metric(
+      label='Linguagem mais popular(%)', 
+      value=f'{nome_limpo} - ({percent_top_linguagem_2024}%)', 
+      delta=delta_texto
+    )
+
+  except KeyError as e:
+    kpi_col3.error(f"Ano ou coluna não encontrado ({e}). Verifique o CSV de linguagens.")
+  except Exception as e:
+    kpi_col3.error(f"Erro KPI Linguagem: {e}")
+
+st.divider()

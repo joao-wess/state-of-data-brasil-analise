@@ -53,7 +53,7 @@ df_kpi_salario_geral = load_data(DASHBOARD_DATA_DIR / 'kpi_salario_geral_mediana
 # KPI's
 # --- KPIs Principais (Resumo Rápido do Cenário Atual - 2024) ---
 st.header("✨ KPIs Principais (2024)")
-kpi_col1, kpi_col2, kpi_col3 = st.columns(3) # Cria 3 colunas para os KPIs
+kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4) # Cria 3 colunas para os KPIs
 
 # KPI 1: Salário Mediano Geral 2024 e Comparação com 2023
 if df_kpi_salario_geral is not None:
@@ -125,5 +125,150 @@ if df_pop_linguagens_pct is not None:
     kpi_col3.error(f"Ano ou coluna não encontrado ({e}). Verifique o CSV de linguagens.")
   except Exception as e:
     kpi_col3.error(f"Erro KPI Linguagem: {e}")
+
+
+# --- KPI 4: Top Ferramenta de BI (2024) ---
+if df_pop_bi_pct is not None:
+  try:
+    df_pop_bi_pct_idx = df_pop_bi_pct.set_index('ano')
+
+    bi_2024 = df_pop_bi_pct_idx.loc[2024]
+
+    top_bi_2024 = bi_2024.idxmax()
+    percent_top_bi_2024 = bi_2024.max()
+
+    #calcular o delta
+    if 2023 in df_pop_bi_pct_idx.index:
+      percent_top_bi_2023 = df_pop_bi_pct_idx.loc[2023, top_bi_2024]
+      delta_bi = percent_top_bi_2024 - percent_top_bi_2023
+      delta_bi_texto = f"{delta_bi:.2f}% p.p vs 2023"
+
+  #exibir
+    kpi_col4.metric(
+      label='Top Ferramenta BI (Uso %)',
+      value=f"{top_bi_2024} - {percent_top_bi_2024}%",
+      delta=delta_bi_texto
+    )
+
+  except KeyError as e:
+    kpi_col4.error(f"Ano ou coluna não encontrado ({e}). Verifique o CSV de BI.")
+  except Exception as e:
+    kpi_col4.error(f"Erro KPI BI: {e}")
+
+
+st.divider() #linha para divisão dos kpis e gráficos
+
+
+
+# Início dos gráficos
+# ==============================================================================
+# SEÇÃO 1: ANÁLISE DE REMUNERAÇÃO
+# ==============================================================================
+st.header("📈 Análise de Remuneração")
+st.markdown("Vamos detalhar como os salários evoluíram e como eles se comparam entre diferentes grupos.")
+
+# --- Gráfico 1.1: Evolução por Senioridade ---
+st.subheader("Evolução do Salário Médio por Nível de Senioridade")
+
+if df_evol_salario_senioridade is not None:
+
+  if 'ano' in df_evol_salario_senioridade.columns:
+    df_evol_salario_senioridade_plot = df_evol_salario_senioridade.copy()
+
+  # "Derreter" o DataFrame e deixar em formato longo
+  df_melted_senioridade = df_evol_salario_senioridade_plot.melt(
+    id_vars='ano', 
+    value_vars=['Júnior', 'Pleno', 'Sênior'], # Colunas que queremos transformar em linhas
+    var_name='nivel_hierarquico',  # Nome da nova coluna para as categorias (Júnior, Pleno...)
+    value_name='salario_medio'     # Nome da nova coluna para os valores (R$ 3876.49, etc.)
+  )
+  
+  # --- 2. Criação do Gráfico (Seaborn + Matplotlib) ---
+  # Criar a "tela" (Figure) e a "área de desenho" (Axes)
+  fig_senioridade, ax_senioridade = plt.subplots(figsize=(10, 4)) # Tamanho 10x5 polegadas
+
+  # Plotar o gráfico de linhas
+  sns.lineplot(
+    data=df_melted_senioridade, #qual dado vamos usar
+    x='ano', #eixo x
+    y='salario_medio', #eixo y
+    hue='nivel_hierarquico', # Cria uma linha de cor diferente para cada nível
+    style='nivel_hierarquico', # (Opcional) Usa estilos de linha diferentes
+    markers=True, # Adiciona marcadores (bolinhas) nos pontos de dados
+    markersize=8, #tamanho do marcador
+    linewidth=2.5, #espessura da linha
+    dashes=False, #todas serão linhas contínuas
+    ax=ax_senioridade # Diz ao Seaborn para desenhar nesta "área"
+  )
+
+  # for nivel in df_melted_senioridade['nivel_hierarquico'].unique():
+  #   dados_nivel = df_melted_senioridade[df_melted_senioridade['nivel_hierarquico'] == nivel]
+    
+  #   for _, row in dados_nivel.iterrows():
+  #       ax_senioridade.annotate(
+  #           f'R$ {row["salario_medio"]:,.0f}'.replace(',', '.'),  # Formatação BR
+  #           (row['ano'], row['salario_medio']),
+  #           textcoords="offset points",
+  #           xytext=(0,10),
+  #           ha='center',
+  #           fontsize=9,
+  #           alpha=0.8,
+  #           bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8)  # Fundo branco
+  #       )
+
+  # --- 3. Customização (Princípios de Visualização) ---
+  # Título claro e informativo
+  ax_senioridade.set_title('Evolução do Salário MÉDIO por Senioridade (2021-2024)', fontsize=16, pad=20)
+  
+  # Rótulos dos eixos claros
+  ax_senioridade.set_xlabel('Ano', fontsize=12)
+  ax_senioridade.set_ylabel('', fontsize=12)
+  
+  # Adicionar uma grade no axes sutil
+  ax_senioridade.grid(axis='y', linestyle='--', alpha=0.4)
+  
+  # Remover "espinhas" (bordas) desnecessárias do gráfico
+  sns.despine(ax=ax_senioridade, left=True, bottom=True)
+  
+  # Formatar o eixo Y para parecer com dinheiro
+  # Isso transforma 12000 em "R$ 12.000"
+  try:
+      # Tenta usar um formatador mais avançado se 'matplotlib.ticker' estiver disponível
+      from matplotlib.ticker import FuncFormatter
+      ax_senioridade.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: f'R$ {x:,.0f}'))
+  except ImportError:
+      # Se falhar, usa um fallback simples
+      st.warning("Matplotlib ticker não encontrado, formatando eixo Y de forma simples.")
+      
+  # Ajustar ticks do eixo X para mostrar todos os anos
+  ax_senioridade.set_xticks([2021, 2022, 2023, 2024])
+  
+  # Mover a legenda para fora do gráfico para não poluir
+  ax_senioridade.legend(title='Senioridade', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+  # Ajusta o layout para garantir que nada (como a legenda) seja cortado
+  plt.tight_layout()
+
+  # --- 4. Exibição no Streamlit ---  
+  # use_container_width=True é o comando chave para fazer o gráfico
+  st.pyplot(fig_senioridade, use_container_width=True)
+  plt.close(fig_senioridade) # Limpa a figura da memória (MUITO IMPORTANTE)
+
+  # --- 5. Storytelling (Opcional, mas recomendado) ---
+  st.markdown("""
+  **Insights da Análise:**
+  * **Crescimento Consistente:** Todos os níveis de senioridade apresentaram um aumento no salário médio de 2021 para 2024.
+  * **Salto Sênior:** O salário médio para Sênior foi o que mais cresceu em termos absolutos, ultrapassando R$ 14.500 em 2024.
+  * **"Vale do Pleno":** Curiosamente, o salário médio para o nível Pleno teve uma leve queda em 2023 antes de se recuperar em 2024, indicando uma possível estabilização ou mudança no perfil dos respondentes desse nível.
+  """)
+
+# mostra a tabela de dados
+  with st.expander("Ver dados da tabela (Salário Médio por Senioridade)"):
+      # Prepara a tabela para exibição, formatando os números
+      tabela_para_exibir = df_evol_salario_senioridade.set_index('ano').style.format("R$ {:,.2f}")
+      st.dataframe(tabela_para_exibir, use_container_width=True)
+
+else:
+  st.warning("Arquivo '04_analise_evolucao_salario_senioridade.csv' não carregado. O gráfico não pode ser gerado.")
 
 st.divider()

@@ -167,94 +167,103 @@ st.divider() #linha para divisão dos kpis e gráficos
 st.header("📈 Análise de Remuneração")
 st.markdown("Vamos detalhar como os salários evoluíram e como eles se comparam entre diferentes grupos.")
 
-# --- Gráfico 1.1: Evolução por Senioridade ---
+# --- Gráfico 1.1: Evolução por Senioridade (COM ANOTAÇÕES DE EVOLUÇÃO) ---
 st.subheader("Evolução do Salário Médio por Nível de Senioridade")
 
 if df_evol_salario_senioridade is not None:
-
-  if 'ano' in df_evol_salario_senioridade.columns:
+  # --- 1. Preparação dos Dados para Plotagem ---
+  if 'ano' not in df_evol_salario_senioridade.columns:
+    df_evol_salario_senioridade_plot = df_evol_salario_senioridade.reset_index()
+  else:
     df_evol_salario_senioridade_plot = df_evol_salario_senioridade.copy()
 
-  # "Derreter" o DataFrame e deixar em formato longo
   df_melted_senioridade = df_evol_salario_senioridade_plot.melt(
     id_vars='ano', 
-    value_vars=['Júnior', 'Pleno', 'Sênior'], # Colunas que queremos transformar em linhas
-    var_name='nivel_hierarquico',  # Nome da nova coluna para as categorias (Júnior, Pleno...)
-    value_name='salario_medio'     # Nome da nova coluna para os valores (R$ 3876.49, etc.)
+    value_vars=['Júnior', 'Pleno', 'Sênior'],
+    var_name='nivel_hierarquico',
+    value_name='salario_medio'
   )
+  
+  # --- Cálculo da Mudança Percentual ---
+  df_melted_senioridade.sort_values(by=['nivel_hierarquico', 'ano'], inplace=True)
+  df_melted_senioridade['variacao_pct'] = df_melted_senioridade.groupby('nivel_hierarquico')['salario_medio'].pct_change()
+
   
   # --- 2. Criação do Gráfico (Seaborn + Matplotlib) ---
-  # Criar a "tela" (Figure) e a "área de desenho" (Axes)
-  fig_senioridade, ax_senioridade = plt.subplots(figsize=(10, 4)) # Tamanho 10x5 polegadas
+  fig_senioridade, ax_senioridade = plt.subplots(figsize=(10, 5)) # Aumentei um pouco a altura para as anotações
 
-  # Plotar o gráfico de linhas
   sns.lineplot(
-    data=df_melted_senioridade, #qual dado vamos usar
-    x='ano', #eixo x
-    y='salario_medio', #eixo y
-    hue='nivel_hierarquico', # Cria uma linha de cor diferente para cada nível
-    style='nivel_hierarquico', # (Opcional) Usa estilos de linha diferentes
-    markers=True, # Adiciona marcadores (bolinhas) nos pontos de dados
-    markersize=8, #tamanho do marcador
-    linewidth=2.5, #espessura da linha
-    dashes=False, #todas serão linhas contínuas
-    ax=ax_senioridade # Diz ao Seaborn para desenhar nesta "área"
+    data=df_melted_senioridade,
+    x='ano',
+    y='salario_medio',
+    hue='nivel_hierarquico',
+    style='nivel_hierarquico',
+    markers=True,
+    markersize=10,
+    linewidth=2.5,
+    dashes=False,
+    ax=ax_senioridade
   )
 
-  # for nivel in df_melted_senioridade['nivel_hierarquico'].unique():
-  #   dados_nivel = df_melted_senioridade[df_melted_senioridade['nivel_hierarquico'] == nivel]
+  # colocar aumento percentual em cada marker
+  for _, row in df_melted_senioridade.iterrows():
+      
+    # --- Parte 1: Anotar o Valor Bruto (para o primeiro ano, 2021) ---
+    if row['ano'] == 2021:
+      cor = "#202020" # Cinza escuro, cor neutra
+      texto = f"R$ {row['salario_medio']:,.0f}" # Formato: "R$ 3.876"
+      deslocamento_vertical = 15 # Coloca um pouco abaixo do ponto
+      fontsize = 8
+      fontweight = '500'
     
-  #   for _, row in dados_nivel.iterrows():
-  #       ax_senioridade.annotate(
-  #           f'R$ {row["salario_medio"]:,.0f}'.replace(',', '.'),  # Formatação BR
-  #           (row['ano'], row['salario_medio']),
-  #           textcoords="offset points",
-  #           xytext=(0,10),
-  #           ha='center',
-  #           fontsize=9,
-  #           alpha=0.8,
-  #           bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8)  # Fundo branco
-  #       )
+    # --- Parte 2: Anotar a Variação Percentual (para os outros anos) ---
+    elif pd.notna(row['variacao_pct']) and row['variacao_pct'] != 0:
+      variacao = row['variacao_pct']
+      cor = 'green' if variacao > 0 else 'red'
+      seta = '↑' if variacao > 0 else '↓'
+      texto = f"{seta} {variacao:+.1%}" # Formato: "+5.2%" ou "-1.8%"
+      fontsize = 9
+      fontweight = '500'
+  
+    # --- Parte 3: Pular (se for NaN e não for 2021) ---
+    else:
+      continue
+
+    # Adiciona a anotação ao gráfico
+    ax_senioridade.annotate(
+      texto, 
+      (row['ano'], row['salario_medio']), #posição dos marcadores
+      textcoords="offset points", 
+      xytext=(0, 10), #deslocamento dos marcadores
+      ha='center', #onde vao ficar
+      fontsize=fontsize,
+      color=cor,
+      fontweight=fontweight
+    )
+  # --- Fim do Loop de Anotação ---
 
   # --- 3. Customização (Princípios de Visualização) ---
-  # Título claro e informativo
   ax_senioridade.set_title('Evolução do Salário MÉDIO por Senioridade (2021-2024)', fontsize=16, pad=20)
-  
-  # Rótulos dos eixos claros
   ax_senioridade.set_xlabel('Ano', fontsize=12)
-  ax_senioridade.set_ylabel('', fontsize=12)
-  
-  # Adicionar uma grade no axes sutil
+  ax_senioridade.set_ylabel("") # Rótulo do eixo Y re-adicionado
   ax_senioridade.grid(axis='y', linestyle='--', alpha=0.4)
-  
-  # Remover "espinhas" (bordas) desnecessárias do gráfico
   sns.despine(ax=ax_senioridade, left=True, bottom=True)
   
-  # Formatar o eixo Y para parecer com dinheiro
-  # Isso transforma 12000 em "R$ 12.000"
   try:
-      # Tenta usar um formatador mais avançado se 'matplotlib.ticker' estiver disponível
-      from matplotlib.ticker import FuncFormatter
-      ax_senioridade.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: f'R$ {x:,.0f}'))
+    from matplotlib.ticker import FuncFormatter
+    ax_senioridade.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: f'R$ {x:,.0f}'))
   except ImportError:
-      # Se falhar, usa um fallback simples
-      st.warning("Matplotlib ticker não encontrado, formatando eixo Y de forma simples.")
-      
-  # Ajustar ticks do eixo X para mostrar todos os anos
-  ax_senioridade.set_xticks([2021, 2022, 2023, 2024])
-  
-  # Mover a legenda para fora do gráfico para não poluir
-  ax_senioridade.legend(title='Senioridade', bbox_to_anchor=(1.05, 1), loc='upper left')
+    st.warning("Matplotlib ticker não encontrado.")
 
-  # Ajusta o layout para garantir que nada (como a legenda) seja cortado
+  ax_senioridade.set_xticks([2021, 2022, 2023, 2024])
+  ax_senioridade.legend(title='Senioridade', bbox_to_anchor=(1.05, 1), loc='upper left')
   plt.tight_layout()
 
   # --- 4. Exibição no Streamlit ---  
-  # use_container_width=True é o comando chave para fazer o gráfico
   st.pyplot(fig_senioridade, use_container_width=True)
-  plt.close(fig_senioridade) # Limpa a figura da memória (MUITO IMPORTANTE)
+  plt.close(fig_senioridade) 
 
-  # --- 5. Storytelling (Opcional, mas recomendado) ---
+  # --- 5. Storytelling ---
   st.markdown("""
   **Insights da Análise:**
   * **Crescimento Consistente:** Todos os níveis de senioridade apresentaram um aumento no salário médio de 2021 para 2024.
@@ -262,11 +271,10 @@ if df_evol_salario_senioridade is not None:
   * **"Vale do Pleno":** Curiosamente, o salário médio para o nível Pleno teve uma leve queda em 2023 antes de se recuperar em 2024, indicando uma possível estabilização ou mudança no perfil dos respondentes desse nível.
   """)
 
-# mostra a tabela de dados
+  # --- 6. Expander com a Tabela (Sua solução perfeita para o "hover") ---
   with st.expander("Ver dados da tabela (Salário Médio por Senioridade)"):
-      # Prepara a tabela para exibição, formatando os números
-      tabela_para_exibir = df_evol_salario_senioridade.set_index('ano').style.format("R$ {:,.2f}")
-      st.dataframe(tabela_para_exibir, use_container_width=True)
+    tabela_para_exibir = df_evol_salario_senioridade.set_index('ano').style.format("R$ {:,.2f}")
+    st.dataframe(tabela_para_exibir, use_container_width=True)
 
 else:
   st.warning("Arquivo '04_analise_evolucao_salario_senioridade.csv' não carregado. O gráfico não pode ser gerado.")

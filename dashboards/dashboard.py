@@ -160,15 +160,20 @@ st.divider() #linha para divisão dos kpis e gráficos
 
 
 
+
+
+
+
+
+
 # Início dos gráficos
-# ==============================================================================
-# SEÇÃO 1: ANÁLISE DE REMUNERAÇÃO
-# ==============================================================================
+#==============================================================================
+#SEÇÃO 1: ANÁLISE DE REMUNERAÇÃO
+#==============================================================================
 st.header("📈 Análise de Remuneração")
 st.markdown("Vamos detalhar como os salários evoluíram e como eles se comparam entre diferentes grupos.")
 
 # --- Gráfico 1.1: Evolução por Senioridade (COM ANOTAÇÕES DE EVOLUÇÃO) ---
-st.subheader("Evolução do Salário Médio por Nível de Senioridade")
 
 if df_evol_salario_senioridade is not None:
   # --- 1. Preparação dos Dados para Plotagem ---
@@ -278,5 +283,122 @@ if df_evol_salario_senioridade is not None:
 
 else:
   st.warning("Arquivo '04_analise_evolucao_salario_senioridade.csv' não carregado. O gráfico não pode ser gerado.")
+
+st.divider()
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ==============================================================================
+st.subheader("Evolução do Salário Médio por Cargo")
+
+if df_evol_salario_cargo is not None:
+  # --- 1. Preparação dos Dados (Melt) ---
+  if 'ano' in df_evol_salario_cargo.columns:
+    df_evol_salario_cargo_plot = df_evol_salario_cargo.copy()
+
+  df_melted_cargo = df_evol_salario_cargo_plot.melt(
+    id_vars='ano',
+    var_name='grupo_cargo',
+    value_name='salario_medio'
+  )
+  
+  df_melted_cargo['ano'] = df_melted_cargo['ano'].astype(int)
+  
+  # --- 2. Interatividade ---
+  cargos_excluidos = ['Não se aplica/Outra área', 'Outros']
+  lista_cargos = sorted(df_melted_cargo['grupo_cargo'].unique())
+  cargos_default = [
+    'Analista de Dados', 
+    'Cientista de Dados', 
+    'Engenheiro de Dados', 
+    'Analista de BI'
+  ]
+  
+  st.markdown("**Selecione os cargos para comparar:**")
+  
+  cargos_selecionados = st.multiselect(
+      label="Cargos", 
+      options=[c for c in lista_cargos if c not in cargos_excluidos],
+      default=cargos_default,
+      label_visibility="collapsed"
+  )
+  
+  # --- 3. Filtragem dos Dados ---
+  if cargos_selecionados:
+    df_plotar_cargos = df_melted_cargo[df_melted_cargo['grupo_cargo'].isin(cargos_selecionados)]
+    
+    # --- 🆕 NOVO: Ordenar cargos por salário em 2024 (decrescente) ---
+    # Pega os salários de 2024 para cada cargo
+    salarios_2024 = df_plotar_cargos[df_plotar_cargos['ano'] == 2024].set_index('grupo_cargo')['salario_medio']
+    
+    # Ordena os cargos do MAIOR para o MENOR salário
+    ordem_decrescente = salarios_2024.sort_values(ascending=False).index.tolist()
+    
+    # --- 4. Criação do Gráfico ---
+    fig_cargo, ax_cargo = plt.subplots(figsize=(10, 4.5))
+    
+    sns.lineplot(
+      data=df_plotar_cargos,
+      x='ano',
+      y='salario_medio',
+      hue='grupo_cargo',
+      style='grupo_cargo',
+      markers=True,
+      markersize=8,
+      linewidth=2,
+      ax=ax_cargo,
+      dashes=False,
+      hue_order=ordem_decrescente  # 🆕 Aplica a ordem decrescente
+    )
+    
+    # --- 5. Customização ---
+    ax_cargo.set_title(f'({len(cargos_selecionados)} cargos selecionados)', fontsize=12, pad=20)
+    ax_cargo.set_xlabel('Ano', fontsize=12)
+    ax_cargo.set_ylabel("")
+    ax_cargo.grid(axis='y', linestyle='--', alpha=0.4)
+    sns.despine(ax=ax_cargo, left=True, bottom=True)
+    
+    try:
+      from matplotlib.ticker import FuncFormatter
+      ax_cargo.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: f'R$ {x:,.0f}'))
+    except ImportError:
+      st.warning("Matplotlib ticker não encontrado.")
+
+    ax_cargo.set_xticks([2021, 2022, 2023, 2024])
+    
+    # 🆕 Legenda já ordenada automaticamente pelo hue_order
+    ax_cargo.legend(
+      title='Cargo',
+      bbox_to_anchor=(1.05, 1), 
+      loc='upper left'
+      )
+    
+    plt.tight_layout()
+    
+    # --- 6. Exibição ---
+    st.pyplot(fig_cargo, use_container_width=True)
+    plt.close(fig_cargo)
+
+    # --- 7. Tabela de Dados (Expander) ---
+    with st.expander("Ver dados da tabela (Salário Médio por Cargo)"):
+      # Filtra a tabela original para mostrar apenas os cargos selecionados
+      tabela_cargos_filtrada = df_evol_salario_cargo[cargos_selecionados].style.format("R$ {:,.2f}")
+      st.dataframe(tabela_cargos_filtrada, use_container_width=True)
+
+  else:
+    st.warning("Por favor, selecione pelo menos um cargo para exibir o gráfico.")
+
+else:
+  st.warning("Arquivo '04_analise_evolucao_salario_cargo.csv' não carregado.")
 
 st.divider()

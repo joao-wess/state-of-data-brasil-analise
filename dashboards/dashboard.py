@@ -195,7 +195,12 @@ if df_evol_salario_senioridade is not None:
 
   
   # --- 2. Criação do Gráfico (Seaborn + Matplotlib) ---
-  fig_senioridade, ax_senioridade = plt.subplots(figsize=(10, 5)) # Aumentei um pouco a altura para as anotações
+  fig_senioridade, ax_senioridade = plt.subplots(figsize=(10, 4.5)) # Aumentei um pouco a altura para as anotações
+
+  #ordem das legendas
+  salario_2024_senioridade = df_melted_senioridade[df_melted_senioridade['ano'] == 2024].set_index('nivel_hierarquico')['salario_medio']
+  
+  ordem_decrescente_senioridade = salario_2024_senioridade.sort_values(ascending=False).index.tolist()
 
   sns.lineplot(
     data=df_melted_senioridade,
@@ -207,7 +212,8 @@ if df_evol_salario_senioridade is not None:
     markersize=10,
     linewidth=2.5,
     dashes=False,
-    ax=ax_senioridade
+    ax=ax_senioridade,
+    hue_order=ordem_decrescente_senioridade
   )
 
   # colocar aumento percentual em cada marker
@@ -226,7 +232,7 @@ if df_evol_salario_senioridade is not None:
       variacao = row['variacao_pct']
       cor = 'green' if variacao > 0 else 'red'
       seta = '↑' if variacao > 0 else '↓'
-      texto = f"{seta} {variacao:+.1%}" # Formato: "+5.2%" ou "-1.8%"
+      texto = f"{seta} {variacao:+.2%}" # Formato: "+5.2%" ou "-1.8%"
       fontsize = 9
       fontweight = '500'
   

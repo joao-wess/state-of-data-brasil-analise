@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.express as px
 from pathlib import Path
 
 st.set_page_config(
@@ -48,6 +49,12 @@ df_modelo_trabalho_pct = load_data(DASHBOARD_DATA_DIR / '18_analise_evolucao_mod
 
 # Carregamento dos KPI's
 df_kpi_salario_geral = load_data(DASHBOARD_DATA_DIR / 'kpi_salario_geral_mediana_ano.csv')
+
+
+
+
+
+
 
 
 # KPI's
@@ -167,9 +174,9 @@ st.divider() #linha para divisão dos kpis e gráficos
 
 
 # Início dos gráficos
-#==============================================================================
-#SEÇÃO 1: ANÁLISE DE REMUNERAÇÃO
-#==============================================================================
+# ==============================================================================
+# SEÇÃO 1: ANÁLISE DE REMUNERAÇÃO
+# ==============================================================================
 st.header("📈 Análise de Remuneração")
 st.markdown("Vamos detalhar como os salários evoluíram e como eles se comparam entre diferentes grupos.")
 
@@ -406,5 +413,154 @@ if df_evol_salario_cargo is not None:
 
 else:
   st.warning("Arquivo '04_analise_evolucao_salario_cargo.csv' não carregado.")
+
+st.divider()
+
+
+
+
+
+
+
+
+# ==============================================================================
+# SEÇÃO 2: TENDÊNCIAS DO MERCADO DE TRABALHO
+# ==============================================================================
+st.header("🏢 Tendências do Mercado de Trabalho")
+st.markdown("Como a forma de trabalhar e as tecnologias mais populares evoluíram.")
+
+st.subheader("Evolução dos Modelos de Trabalho (2021-2024)")
+
+if df_modelo_trabalho_pct is not None:
+    # --- 1. Preparação dos Dados ---
+    if 'ano' in df_modelo_trabalho_pct.columns:
+        df_modelo_plot = df_modelo_trabalho_pct.copy()
+    else:
+        df_modelo_plot = df_modelo_trabalho_pct.reset_index()
+
+    # Formatar para porcentagem decimal (0.0 a 1.0)
+    colunas_modelo = [col for col in df_modelo_plot.columns if col != 'ano']
+    df_modelo_plot[colunas_modelo] = df_modelo_plot[colunas_modelo] / 100.0
+    
+    df_modelo_plot = df_modelo_plot.set_index('ano')
+
+    # 🆕 ETAPA DE PREPARAÇÃO CORRIGIDA: Não removemos mais 'Não informado'
+    df_plotar_modelos = df_modelo_plot.copy()
+    
+    # 🆕 ORDEM DA PILHA MANUAL: Definimos a ordem exata da pilha, de baixo para cima
+    # Isso nos dá controle total e corrige o problema da legenda.
+    ordem_stack = [
+        'Remoto', 
+        'Híbrido Flexível', 
+        'Híbrido Fixo', 
+        'Presencial',
+        'Não informado' # Colocamos por último, para que apareça no topo
+    ]
+    
+    # Garantir que usamos apenas colunas que existem no DataFrame
+    ordem_stack = [col for col in ordem_stack if col in df_plotar_modelos.columns]
+    
+    # Pega os dados de cada coluna para o stackplot
+    dados_stack = [df_plotar_modelos[col] for col in ordem_stack]
+    labels_stack = [col.replace('_', ' ') for col in ordem_stack]
+    
+    # Cores intuitivas (deve incluir 'Não informado' agora)
+    cores = {
+        'Remoto': '#1f77b4',           # Azul
+        'Híbrido Flexível': '#2ca02c', # Verde
+        'Híbrido Fixo': '#ff7f0e',     # Laranja
+        'Presencial': "#ce2a2a",       # Vermelho
+        'Não informado': '#7f7f7f'    # Cinza
+    }
+    
+    # Garante que só pegamos cores para as colunas que existem
+    cores_stack = [cores[col] for col in ordem_stack]
+    
+    # --- 2. Criação do Gráfico (Matplotlib Stackplot) ---
+    fig, ax = plt.subplots(figsize=(12, 5))
+    
+    # Plotar área empilhada
+    ax.stackplot(
+        df_plotar_modelos.index,
+        *dados_stack,
+        labels=labels_stack,
+        colors=cores_stack, # 🆕 Usa a lista de cores ordenada
+        alpha=0.8
+    )
+    
+    # ==============================================================
+    # ADIÇÃO DOS MARCADORES (Agora funciona para todas as camadas)
+    # ==============================================================
+    
+    # 1. Calcular a soma cumulativa dos dados
+    df_cumulativo = df_plotar_modelos[ordem_stack].cumsum(axis=1) # 🆕 Usa a ordem manual
+    
+    # 2. Loop através de cada categoria (camada)
+    for col in ordem_stack: # 🆕 Usa a ordem manual
+        cor = cores[col] 
+        
+        ax.plot(
+            df_cumulativo.index,
+            df_cumulativo[col],
+            marker='o',
+            linestyle='none',
+            markersize=5,
+            markerfacecolor=cor,
+            markeredgecolor='white',
+            markeredgewidth=1.5
+        )
+    # ==============================================================
+    # FIM DA ADIÇÃO DOS MARCADORES
+    # ==============================================================
+
+    # --- 3. Customização (Usabilidade) ---
+    ax.set_title('Evolução da Distribuição dos Modelos de Trabalho (2021-2024)', fontsize=16, pad=20)
+    ax.set_xlabel('Ano', fontsize=12)
+    ax.set_ylabel('Proporção de Profissionais', fontsize=12)
+    
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0%}'))
+    ax.grid(axis='y', linestyle='--', alpha=0.4)
+    ax.set_axisbelow(True)
+    ax.set_xticks([2021, 2022, 2023, 2024])
+    ax.set_ylim(0, 1) 
+    
+    # Legenda (com a sua inversão correta)
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(
+        handles=handles[::-1], # 🆕 A sua inversão agora funciona perfeitamente
+        labels=labels[::-1],   
+        title='Modelo de Trabalho',
+        bbox_to_anchor=(1.05, 1),
+        loc='upper left',
+        frameon=True
+    )
+    sns.despine(ax=ax)
+    plt.tight_layout()
+    
+    # --- 4. Exibição ---
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
+    
+    # --- 5. Storytelling ---
+    # (Seu markdown de insights continua perfeito)
+    st.markdown(f"""
+    **📈 Insights Principais:**
+    **📉 Queda do Remoto**: Redução de 50.5% (2021) para 42.6% (2024)
+  - **📈 Crescimento Híbrido**: Modelos híbridos saltaram de 26.5% para 35.4%
+  - **🎯 Híbrido Flexível**: Manteve-se como segundo modelo mais popular
+  - **🏢 Presencial Estável**: Manteve-se around 13-15%
+  - **🎭 Mudança Cultural**: Transição clara do remoto para modelos híbridos.
+  - **Crescimento Híbrido**: Os modelos híbridos (Fixo + Flexível) somados cresceram de 26.5% (2021) para 35.4% (2024).
+    """)
+    
+    # --- 6. Tabela Interativa ---
+    with st.expander("📊 Ver dados detalhados"):
+        st.dataframe(
+            df_modelo_trabalho_pct.set_index('ano').style.format("{:.2f}%"),
+            use_container_width=True
+        )
+
+else:
+    st.warning("Arquivo '18_analise_evolucao_modelo_trabalho_pct.csv' não carregado.")
 
 st.divider()

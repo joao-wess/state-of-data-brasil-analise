@@ -429,8 +429,6 @@ st.divider()
 st.header("🏢 Tendências do Mercado de Trabalho")
 st.markdown("Como a forma de trabalhar e as tecnologias mais populares evoluíram.")
 
-st.subheader("Evolução dos Modelos de Trabalho (2021-2024)")
-
 if df_modelo_trabalho_pct is not None:
     # --- 1. Preparação dos Dados ---
     if 'ano' in df_modelo_trabalho_pct.columns:
@@ -516,7 +514,7 @@ if df_modelo_trabalho_pct is not None:
     # --- 3. Customização (Usabilidade) ---
     ax.set_title('Evolução da Distribuição dos Modelos de Trabalho (2021-2024)', fontsize=16, pad=20)
     ax.set_xlabel('Ano', fontsize=12)
-    ax.set_ylabel('Proporção de Profissionais', fontsize=12)
+    ax.set_ylabel("")
     
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0%}'))
     ax.grid(axis='y', linestyle='--', alpha=0.4)
@@ -562,5 +560,228 @@ if df_modelo_trabalho_pct is not None:
 
 else:
     st.warning("Arquivo '18_analise_evolucao_modelo_trabalho_pct.csv' não carregado.")
+
+st.divider()
+
+
+
+
+
+
+
+# ==============================================================================
+# SEÇÃO 3: TECNOLOGIAS EM ALTA
+# ==============================================================================
+# --- Gráfico 3.1: Popularidade das Linguagens de Programação --
+st.subheader("A popularidade das principais linguagens")
+
+if df_pop_linguagens_pct is not None:
+  # --- 1. Preparação e Consolidação dos Dados ---
+  
+  if 'ano' not in df_pop_linguagens_pct.columns:
+    df_lang_plot = df_pop_linguagens_pct.reset_index()
+  else:
+    df_lang_plot = df_pop_linguagens_pct.copy()
+
+  # Consolidar as colunas "Nenhuma"
+  cols_nenhuma_lang = [
+    'usa_linguagem_nenhuma', 
+    'usa_linguagem_não_utilizo_linguagem_de_programação_no_trabalho', 
+    'usa_linguagem_não_utilizo_nenhuma_das_linguagens_listadas'
+  ]
+  cols_nenhuma_existentes = [col for col in cols_nenhuma_lang if col in df_lang_plot.columns]
+  df_lang_plot['Nenhuma'] = df_lang_plot[cols_nenhuma_existentes].sum(axis=1)
+  df_lang_plot = df_lang_plot.drop(columns=cols_nenhuma_existentes)
+  
+  # --- 2. Agrupar a "Longa Cauda" ---
+  linguagens_principais = [
+    'ano',
+    'usa_linguagem_sql',
+    'usa_linguagem_python',
+    'usa_linguagem_javascript',
+    'usa_linguagem_java',
+    'Nenhuma'
+  ]
+  
+  cols_outras = [
+    col for col in df_lang_plot.columns if col not in linguagens_principais
+  ]
+  
+  df_lang_plot['Outras Linguagens'] = df_lang_plot[cols_outras].sum(axis=1)
+  df_lang_final_plot = df_lang_plot[linguagens_principais + ['Outras Linguagens']]
+
+  # --- 3. Preparação para Plotagem (Melt) ---
+  df_melted_lang = df_lang_final_plot.melt(
+    id_vars='ano',
+    var_name='linguagem_coluna',
+    value_name='popularidade_pct'
+  )
+  
+  # Limpar os nomes das linguagens para exibição
+  df_melted_lang['Linguagem'] = df_melted_lang['linguagem_coluna'].str.replace('usa_linguagem_', '').str.replace('_', ' ').str.title()
+  df_melted_lang['Linguagem'] = df_melted_lang['Linguagem'].replace(
+    {
+    'C C++ C#': 'C/C++/C#',
+    'Net': '.NET',
+    'Sas Stata':'SAS/Stata',
+    'Visual Basic Vba': 'VBA',
+    'Sql': 'SQL',
+    'Python': 'Python',
+    'R': 'R',
+    'Nenhuma': 'Nenhuma',
+    'Outras Linguagens': 'Outras Linguagens'
+  })
+  
+  # --- 4. 🆕 CÁLCULO DOS DELTAS ---
+  df_melted_lang.sort_values(['Linguagem', 'ano'], inplace=True)
+  df_melted_lang['delta_pct'] = df_melted_lang.groupby('Linguagem')['popularidade_pct'].diff()
+  
+  # --- 5. Interatividade ---
+  lista_linguagens = sorted(df_melted_lang['Linguagem'].unique())
+  linguagens_default = ['SQL', 'Python', 'Outras Linguagens']
+  
+  st.markdown("**Selecione as linguagens para comparar:**")
+  linguagens_selecionadas = st.multiselect(
+    label="Linguagens para comparar",
+    options=lista_linguagens,
+    default=linguagens_default,
+    label_visibility="collapsed"
+  )
+
+  # --- 6. 🆕 SELETOR DE DELTAS ---
+  if linguagens_selecionadas:
+    st.markdown("**Mostrar deltas (variação anual) para:**")
+    
+    # Opções para mostrar deltas (apenas linguagens selecionadas)
+    opcoes_deltas = ['Selecione Alguma'] + linguagens_selecionadas
+    
+    linguagem_com_delta = st.selectbox(
+      label="Selecionar linguagem para ver variações",
+      options=opcoes_deltas,
+      index=0,  # 'Nenhuma' como padrão
+      label_visibility="collapsed"
+    )
+  
+  # --- 7. GRÁFICO PLOTLY (COM HOVER E DELTAS) ---
+  if linguagens_selecionadas:
+    df_plotar_linguagens = df_melted_lang[df_melted_lang['Linguagem'].isin(linguagens_selecionadas)]
+    
+    # Ordenar pela popularidade de 2024 para legenda
+    pop_2024 = df_plotar_linguagens[df_plotar_linguagens['ano'] == 2024]
+    ordem_legenda_lang = pop_2024.sort_values(by='popularidade_pct', ascending=False)['Linguagem'].tolist()
+
+    # Criar gráfico Plotly
+    fig_lang = px.line(
+      df_plotar_linguagens,
+      x='ano',
+      y='popularidade_pct',
+      color='Linguagem',
+      category_orders={'Linguagem': ordem_legenda_lang},
+      markers=True,
+      title=f'Popularidade das Linguagens Selecionadas ({len(linguagens_selecionadas)} categorias)',
+      labels={
+        'ano': 'Ano',
+        'popularidade_pct': '',
+        'Linguagem': 'Linguagem de Programação'
+      }
+    )
+    
+    # --- 8. 🆕 ADICIONAR ANOTAÇÕES DE DELTA ---
+    if linguagem_com_delta != 'Selecione Alguma':
+      dados_delta = df_plotar_linguagens[df_plotar_linguagens['Linguagem'] == linguagem_com_delta]
+      
+      for _, row in dados_delta.iterrows():
+        if pd.notna(row['delta_pct']) and row['delta_pct'] != 0:
+          # Calcular posição Y para a anotação (acima ou abaixo da linha)
+          y_pos = row['popularidade_pct']
+          offset_y = 15 if row['delta_pct'] > 0 else -20
+          
+          # Cor e símbolo baseado na direção
+          cor = 'green' if row['delta_pct'] > 0 else 'red'
+          simbolo = '▲' if row['delta_pct'] > 0 else '▼'
+          
+          fig_lang.add_annotation(
+            x=row['ano'],
+            y=y_pos,
+            text=f"{simbolo} {abs(row['delta_pct']):.2f}%",
+            showarrow=False,
+            yshift=offset_y,
+            font=dict(
+                color=cor,
+                size=14,
+                weight='bold'
+            ),
+            bgcolor='white',
+            bordercolor=cor,
+            borderwidth=1,
+            borderpad=2
+          )
+    
+    # --- 9. Customização do Hover ---
+    fig_lang.update_traces(
+      hovertemplate="<br>".join([
+        "<b>%{fullData.name}</b>",
+        "Ano: %{x}",
+        "Popularidade: <b>%{y:.2f}%</b>",
+        "<extra></extra>"
+      ]),
+      marker=dict(size=12),
+      line=dict(width=3)
+    )
+    
+    # --- 10. Customização do Layout ---
+    fig_lang.update_layout(
+      height=500,
+      showlegend=True,
+      legend=dict(
+        title='Linguagem',
+        orientation='v',
+        yanchor='top',
+        y=1,
+        xanchor='left',
+        x=1.05
+      ),
+      xaxis=dict(
+        tickmode='array',
+        tickvals=[2021, 2022, 2023, 2024],
+        ticktext=['2021', '2022', '2023', '2024']
+      ),
+      yaxis=dict(
+        ticksuffix='%',
+        gridcolor='lightgray',
+        gridwidth=1
+      ),
+      plot_bgcolor='white',
+      paper_bgcolor='white',
+      font=dict(color='black')
+    )
+    
+    # --- 11. 🆕 LEGENDA INFORMATIVA ---
+    if linguagem_com_delta != 'Selecione Alguma':
+      st.info(f"📈 **Mostrando variações anuais para: {linguagem_com_delta}** (▲ aumento, ▼ redução)")
+    
+    # Exibir gráfico Plotly
+    st.plotly_chart(fig_lang, use_container_width=True)
+    
+    # --- 12. Tabela de Dados (Expander) ---
+    with st.expander("Ver dados da tabela (% de Popularidade das Linguagens)"):
+      tabela_linguagens_filtrada = df_plotar_linguagens.pivot(
+        index='ano', 
+        columns='Linguagem', 
+        values='popularidade_pct'
+      )[linguagens_selecionadas]
+      
+      # 🆕 Adicionar coluna de delta se uma linguagem estiver selecionada
+      if linguagem_com_delta != 'Selecione Alguma':
+        dados_delta_tabela = df_plotar_linguagens[df_plotar_linguagens['Linguagem'] == linguagem_com_delta][['ano', 'delta_pct']]
+        tabela_linguagens_filtrada[f'Delta {linguagem_com_delta}'] = dados_delta_tabela.set_index('ano')['delta_pct']
+      
+      st.dataframe(tabela_linguagens_filtrada.style.format("{:.2f}%"), use_container_width=True)
+
+  else:
+      st.warning("Por favor, selecione pelo menos uma linguagem para exibir o gráfico.")
+
+else:
+  st.warning("Arquivo '08_analise_popularidade_linguagens_pct.csv' não carregado.")
 
 st.divider()

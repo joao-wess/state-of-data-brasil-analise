@@ -169,140 +169,161 @@ st.divider() #linha para divisão dos kpis e gráficos
 
 
 
-
-
-
-
-# Início dos gráficos
 # ==============================================================================
 # SEÇÃO 1: ANÁLISE DE REMUNERAÇÃO
 # ==============================================================================
 st.header("📈 Análise de Remuneração")
 st.markdown("Vamos detalhar como os salários evoluíram e como eles se comparam entre diferentes grupos.")
 
-# --- Gráfico 1.1: Evolução por Senioridade (COM ANOTAÇÕES DE EVOLUÇÃO) ---
-
+# --- Gráfico 1.1: Evolução por Senioridade (COM PLOTLY E ANOTAÇÕES) ---
 if df_evol_salario_senioridade is not None:
-  # --- 1. Preparação dos Dados para Plotagem ---
-  if 'ano' not in df_evol_salario_senioridade.columns:
-    df_evol_salario_senioridade_plot = df_evol_salario_senioridade.reset_index()
-  else:
-    df_evol_salario_senioridade_plot = df_evol_salario_senioridade.copy()
-
-  df_melted_senioridade = df_evol_salario_senioridade_plot.melt(
-    id_vars='ano', 
-    value_vars=['Júnior', 'Pleno', 'Sênior'],
-    var_name='nivel_hierarquico',
-    value_name='salario_medio'
-  )
-  
-  # --- Cálculo da Mudança Percentual ---
-  df_melted_senioridade.sort_values(by=['nivel_hierarquico', 'ano'], inplace=True)
-  df_melted_senioridade['variacao_pct'] = df_melted_senioridade.groupby('nivel_hierarquico')['salario_medio'].pct_change()
-
-  
-  # --- 2. Criação do Gráfico (Seaborn + Matplotlib) ---
-  fig_senioridade, ax_senioridade = plt.subplots(figsize=(10, 4.5)) # Aumentei um pouco a altura para as anotações
-
-  #ordem das legendas
-  salario_2024_senioridade = df_melted_senioridade[df_melted_senioridade['ano'] == 2024].set_index('nivel_hierarquico')['salario_medio']
-  
-  ordem_decrescente_senioridade = salario_2024_senioridade.sort_values(ascending=False).index.tolist()
-
-  sns.lineplot(
-    data=df_melted_senioridade,
-    x='ano',
-    y='salario_medio',
-    hue='nivel_hierarquico',
-    style='nivel_hierarquico',
-    markers=True,
-    markersize=10,
-    linewidth=2.5,
-    dashes=False,
-    ax=ax_senioridade,
-    hue_order=ordem_decrescente_senioridade
-  )
-
-  # colocar aumento percentual em cada marker
-  for _, row in df_melted_senioridade.iterrows():
-      
-    # --- Parte 1: Anotar o Valor Bruto (para o primeiro ano, 2021) ---
-    if row['ano'] == 2021:
-      cor = "#202020" # Cinza escuro, cor neutra
-      texto = f"R$ {row['salario_medio']:,.0f}" # Formato: "R$ 3.876"
-      deslocamento_vertical = 15 # Coloca um pouco abaixo do ponto
-      fontsize = 8
-      fontweight = '500'
-    
-    # --- Parte 2: Anotar a Variação Percentual (para os outros anos) ---
-    elif pd.notna(row['variacao_pct']) and row['variacao_pct'] != 0:
-      variacao = row['variacao_pct']
-      cor = 'green' if variacao > 0 else 'red'
-      seta = '↑' if variacao > 0 else '↓'
-      texto = f"{seta} {variacao:+.2%}" # Formato: "+5.2%" ou "-1.8%"
-      fontsize = 9
-      fontweight = '500'
-  
-    # --- Parte 3: Pular (se for NaN e não for 2021) ---
+    # --- 1. Preparação dos Dados para Plotagem ---
+    if 'ano' not in df_evol_salario_senioridade.columns:
+        df_evol_salario_senioridade_plot = df_evol_salario_senioridade.reset_index()
     else:
-      continue
+        df_evol_salario_senioridade_plot = df_evol_salario_senioridade.copy()
 
-    # Adiciona a anotação ao gráfico
-    ax_senioridade.annotate(
-      texto, 
-      (row['ano'], row['salario_medio']), #posição dos marcadores
-      textcoords="offset points", 
-      xytext=(0, 10), #deslocamento dos marcadores
-      ha='center', #onde vao ficar
-      fontsize=fontsize,
-      color=cor,
-      fontweight=fontweight
+    df_melted_senioridade = df_evol_salario_senioridade_plot.melt(
+        id_vars='ano', 
+        value_vars=['Júnior', 'Pleno', 'Sênior'],
+        var_name='nivel_hierarquico',
+        value_name='salario_medio'
     )
-  # --- Fim do Loop de Anotação ---
+    
+    # --- 2. Cálculo da Mudança Percentual e Absoluta ---
+    df_melted_senioridade.sort_values(by=['nivel_hierarquico', 'ano'], inplace=True)
+    df_melted_senioridade['variacao_pct'] = df_melted_senioridade.groupby('nivel_hierarquico')['salario_medio'].pct_change()
+    df_melted_senioridade['variacao_absoluta'] = df_melted_senioridade.groupby('nivel_hierarquico')['salario_medio'].diff()
+    
+    # Ordenar pela salário de 2024 (decrescente)
+    salario_2024_senioridade = df_melted_senioridade[df_melted_senioridade['ano'] == 2024].set_index('nivel_hierarquico')['salario_medio']
+    ordem_decrescente_senioridade = salario_2024_senioridade.sort_values(ascending=False).index.tolist()
 
-  # --- 3. Customização (Princípios de Visualização) ---
-  ax_senioridade.set_title('Evolução do Salário MÉDIO por Senioridade (2021-2024)', fontsize=16, pad=20)
-  ax_senioridade.set_xlabel('Ano', fontsize=12)
-  ax_senioridade.set_ylabel("") # Rótulo do eixo Y re-adicionado
-  ax_senioridade.grid(axis='y', linestyle='--', alpha=0.4)
-  sns.despine(ax=ax_senioridade, left=True, bottom=True)
-  
-  try:
-    from matplotlib.ticker import FuncFormatter
-    ax_senioridade.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: f'R$ {x:,.0f}'))
-  except ImportError:
-    st.warning("Matplotlib ticker não encontrado.")
-
-  ax_senioridade.set_xticks([2021, 2022, 2023, 2024])
-  ax_senioridade.legend(title='Senioridade', bbox_to_anchor=(1.05, 1), loc='upper left')
-  plt.tight_layout()
-
-  # --- 4. Exibição no Streamlit ---  
-  st.pyplot(fig_senioridade, use_container_width=True)
-  plt.close(fig_senioridade) 
-
-  # --- 5. Storytelling ---
-  st.markdown("""
-  **Insights da Análise:**
-  * **Crescimento Consistente:** Todos os níveis de senioridade apresentaram um aumento no salário médio de 2021 para 2024.
-  * **Salto Sênior:** O salário médio para Sênior foi o que mais cresceu em termos absolutos, ultrapassando R$ 14.500 em 2024.
-  * **"Vale do Pleno":** Curiosamente, o salário médio para o nível Pleno teve uma leve queda em 2023 antes de se recuperar em 2024, indicando uma possível estabilização ou mudança no perfil dos respondentes desse nível.
-  """)
-
-  # --- 6. Expander com a Tabela (Sua solução perfeita para o "hover") ---
-  with st.expander("Ver dados da tabela (Salário Médio por Senioridade)"):
-    tabela_para_exibir = df_evol_salario_senioridade.set_index('ano').style.format("R$ {:,.2f}")
-    st.dataframe(tabela_para_exibir, use_container_width=True)
+    # --- 3. Criação do Gráfico Plotly ---
+    fig_senioridade = px.line(
+        df_melted_senioridade,
+        x='ano',
+        y='salario_medio',
+        color='nivel_hierarquico',
+        category_orders={'nivel_hierarquico': ordem_decrescente_senioridade},
+        markers=True,
+        symbol='nivel_hierarquico',
+        title='Evolução do Salário Médio por Senioridade (2021-2024)',
+        labels={
+            'ano': 'Ano',
+            'salario_medio': '',
+            'nivel_hierarquico': 'Nível de Senioridade'
+        }
+    )
+    
+    # --- 4. 🆕 ADICIONAR ANOTAÇÕES AUTOMÁTICAS ---
+    # Primeiro ano: valor bruto, anos seguintes: delta
+    for _, row in df_melted_senioridade.iterrows():
+        if row['ano'] == 2021:
+            # Primeiro ano: mostrar valor bruto
+            texto = f"R$ {row['salario_medio']:,.0f}"
+            cor = '#202020'  # Cinza escuro
+            offset_y = 20
+            tamanho_fonte = 14
+        elif pd.notna(row['variacao_pct']) and row['variacao_pct'] != 0:
+            # Anos seguintes: mostrar variação percentual
+            variacao = row['variacao_pct']
+            cor = 'green' if variacao > 0 else 'red'
+            simbolo = '▲' if variacao > 0 else '▼'
+            texto = f"{simbolo} {abs(variacao):.1%}"
+            offset_y = 20 if variacao > 0 else -20
+            tamanho_fonte = 14
+        else:
+            continue
+        
+        fig_senioridade.add_annotation(
+            x=row['ano'],
+            y=row['salario_medio'],
+            text=texto,
+            showarrow=False,
+            yshift=offset_y,
+            font=dict(
+                color=cor,
+                size=tamanho_fonte,
+                weight='bold'
+            ),
+            bgcolor='white',
+            bordercolor=cor,
+            borderwidth=1,
+            borderpad=2
+        )
+    
+    # --- 5. Customização do Hover (Valores Brutos) ---
+    fig_senioridade.update_traces(
+        hovertemplate="<br>".join([
+            "<b>%{fullData.name}</b>",
+            "Ano: %{x}",
+            "Salário Médio: <b>R$ %{y:,.2f}</b>",
+            "<extra></extra>"
+        ]),
+        marker=dict(size=12),
+        line=dict(width=3)
+    )
+    
+    # --- 6. Customização do Layout ---
+    fig_senioridade.update_layout(
+        height=700,
+        showlegend=True,
+        legend=dict(
+            title='Senioridade',
+            orientation='v',
+            yanchor='top',
+            y=1,
+            xanchor='left',
+            x=1.05
+        ),
+        xaxis=dict(
+            tickmode='array',
+            tickvals=[2021, 2022, 2023, 2024],
+            ticktext=['2021', '2022', '2023', '2024'],
+            gridcolor='lightgray',
+            gridwidth=1,
+            title_font=dict(size=20, color='black', weight='bold'),  # Título mais forte
+            tickfont=dict(size=20, color='black', weight='bold'),    # Números mais fortes
+            linecolor='black',                                       # Linha do eixo
+            linewidth=1                                              # Espessura da linha
+        ),
+        yaxis=dict(
+            tickprefix='R$ ',
+            gridcolor='lightgray',
+            gridwidth=1,
+            tickformat=',.0f',
+            title_font=dict(size=16, color='black', weight='bold'),  # Título mais forte
+            tickfont=dict(size=20, color='black', weight='bold'),    # Números mais fortes
+            linecolor='black',                                       # Linha do eixo
+            linewidth=1                                              # Espessura da linha
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(color='black')
+    )
+    
+    # --- 7. Exibição no Streamlit ---
+    st.plotly_chart(fig_senioridade, use_container_width=True)
+    
+    # --- 8. Storytelling ---
+    st.markdown("""
+    **📊 Insights da Análise:**
+    - **📈 Crescimento Consistente:** Todos os níveis de senioridade apresentaram aumento salarial de 2021 para 2024
+    - **🚀 Salto Sênior:** Senior foi o que mais cresceu em valores absolutos, ultrapassando R$ 14.500 em 2024
+    - **🔄 Vale do Pleno:** Leve queda em 2023 antes da recuperação em 2024, indicando possível estabilização
+    - **💰 Diferença Hierárquica:** Gap salarial entre Pleno e Sênior é maior que entre Júnior e Pleno
+    """)
+    
+    # --- 9. Expander com Tabela ---
+    with st.expander("📋 Ver dados da tabela (Salário Médio por Senioridade)"):
+        tabela_para_exibir = df_evol_salario_senioridade.set_index('ano').style.format("R$ {:,.2f}")
+        st.dataframe(tabela_para_exibir, use_container_width=True)
 
 else:
-  st.warning("Arquivo '04_analise_evolucao_salario_senioridade.csv' não carregado. O gráfico não pode ser gerado.")
+    st.warning("Arquivo '04_analise_evolucao_salario_senioridade.csv' não carregado.")
 
 st.divider()
-
-
-
-
-
 
 
 
@@ -744,12 +765,18 @@ if df_pop_linguagens_pct is not None:
       xaxis=dict(
         tickmode='array',
         tickvals=[2021, 2022, 2023, 2024],
-        ticktext=['2021', '2022', '2023', '2024']
+        ticktext=['2021', '2022', '2023', '2024'],
+        title_font=dict(size=20, color='black', weight='bold'),  # Título mais forte
+        tickfont=dict(size=20, color='black', weight='bold'),    # Números mais fortes
+        linecolor='black',                                       # Linha do eixo
+        linewidth=1                                              # Espessura da linha
+
       ),
       yaxis=dict(
         ticksuffix='%',
         gridcolor='lightgray',
-        gridwidth=1
+        gridwidth=1,
+        tickfont=dict(size=20, color='black', weight='bold'),    # Números mais fortes
       ),
       plot_bgcolor='white',
       paper_bgcolor='white',
@@ -779,7 +806,7 @@ if df_pop_linguagens_pct is not None:
       st.dataframe(tabela_linguagens_filtrada.style.format("{:.2f}%"), use_container_width=True)
 
   else:
-      st.warning("Por favor, selecione pelo menos uma linguagem para exibir o gráfico.")
+    st.warning("Por favor, selecione pelo menos uma linguagem para exibir o gráfico.")
 
 else:
   st.warning("Arquivo '08_analise_popularidade_linguagens_pct.csv' não carregado.")

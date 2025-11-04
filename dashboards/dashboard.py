@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 import plotly.express as px
 from pathlib import Path
 
@@ -169,6 +170,7 @@ st.divider() #linha para divisão dos kpis e gráficos
 
 
 
+
 # ==============================================================================
 # SEÇÃO 1: ANÁLISE DE REMUNERAÇÃO
 # ==============================================================================
@@ -177,151 +179,148 @@ st.markdown("Vamos detalhar como os salários evoluíram e como eles se comparam
 
 # --- Gráfico 1.1: Evolução por Senioridade (COM PLOTLY E ANOTAÇÕES) ---
 if df_evol_salario_senioridade is not None:
-    # --- 1. Preparação dos Dados para Plotagem ---
-    if 'ano' not in df_evol_salario_senioridade.columns:
-        df_evol_salario_senioridade_plot = df_evol_salario_senioridade.reset_index()
+  # --- 1. Preparação dos Dados para Plotagem ---
+  if 'ano' not in df_evol_salario_senioridade.columns:
+    df_evol_salario_senioridade_plot = df_evol_salario_senioridade.reset_index()
+  else:
+    df_evol_salario_senioridade_plot = df_evol_salario_senioridade.copy()
+
+  df_melted_senioridade = df_evol_salario_senioridade_plot.melt(
+    id_vars='ano', 
+    value_vars=['Júnior', 'Pleno', 'Sênior'],
+    var_name='nivel_hierarquico',
+    value_name='salario_medio'
+  )
+  
+  # --- 2. Cálculo da Mudança Percentual e Absoluta ---
+  df_melted_senioridade.sort_values(by=['nivel_hierarquico', 'ano'], inplace=True)
+  df_melted_senioridade['variacao_pct'] = df_melted_senioridade.groupby('nivel_hierarquico')['salario_medio'].pct_change()
+  df_melted_senioridade['variacao_absoluta'] = df_melted_senioridade.groupby('nivel_hierarquico')['salario_medio'].diff()
+  
+  # Ordenar pela salário de 2024 (decrescente)
+  salario_2024_senioridade = df_melted_senioridade[df_melted_senioridade['ano'] == 2024].set_index('nivel_hierarquico')['salario_medio']
+  ordem_decrescente_senioridade = salario_2024_senioridade.sort_values(ascending=False).index.tolist()
+
+  # --- 3. Criação do Gráfico Plotly ---
+  fig_senioridade = px.line(
+    df_melted_senioridade,
+    x='ano',
+    y='salario_medio',
+    color='nivel_hierarquico',
+    category_orders={'nivel_hierarquico': ordem_decrescente_senioridade},
+    markers=True,
+    symbol='nivel_hierarquico',
+    title='Evolução do Salário Médio por Senioridade (2021-2024)',
+    labels={
+      'ano': 'Ano',
+      'salario_medio': '',
+      'nivel_hierarquico': 'Nível de Senioridade'
+    }
+  )
+  
+  # --- 4. 🆕 ADICIONAR ANOTAÇÕES AUTOMÁTICAS ---
+  # Primeiro ano: valor bruto, anos seguintes: delta
+  for _, row in df_melted_senioridade.iterrows():
+    if row['ano'] == 2021:
+      # Primeiro ano: mostrar valor bruto
+      texto = f"R$ {row['salario_medio']:,.0f}"
+      cor = '#202020'  # Cinza escuro
+      offset_y = 20
+      tamanho_fonte = 14
+    elif pd.notna(row['variacao_pct']) and row['variacao_pct'] != 0:
+      # Anos seguintes: mostrar variação percentual
+      variacao = row['variacao_pct']
+      cor = 'green' if variacao > 0 else 'red'
+      simbolo = '▲' if variacao > 0 else '▼'
+      texto = f"{simbolo} {abs(variacao):.1%}"
+      offset_y = 20 if variacao > 0 else -20
+      tamanho_fonte = 14
     else:
-        df_evol_salario_senioridade_plot = df_evol_salario_senioridade.copy()
-
-    df_melted_senioridade = df_evol_salario_senioridade_plot.melt(
-        id_vars='ano', 
-        value_vars=['Júnior', 'Pleno', 'Sênior'],
-        var_name='nivel_hierarquico',
-        value_name='salario_medio'
+      continue
+    
+    fig_senioridade.add_annotation(
+      x=row['ano'],
+      y=row['salario_medio'],
+      text=texto,
+      showarrow=False,
+      yshift=offset_y,
+      font=dict(
+          color=cor,
+          size=tamanho_fonte,
+          weight='bold'
+      ),
+      bgcolor='white',
+      bordercolor=cor,
+      borderwidth=1,
+      borderpad=2
     )
-    
-    # --- 2. Cálculo da Mudança Percentual e Absoluta ---
-    df_melted_senioridade.sort_values(by=['nivel_hierarquico', 'ano'], inplace=True)
-    df_melted_senioridade['variacao_pct'] = df_melted_senioridade.groupby('nivel_hierarquico')['salario_medio'].pct_change()
-    df_melted_senioridade['variacao_absoluta'] = df_melted_senioridade.groupby('nivel_hierarquico')['salario_medio'].diff()
-    
-    # Ordenar pela salário de 2024 (decrescente)
-    salario_2024_senioridade = df_melted_senioridade[df_melted_senioridade['ano'] == 2024].set_index('nivel_hierarquico')['salario_medio']
-    ordem_decrescente_senioridade = salario_2024_senioridade.sort_values(ascending=False).index.tolist()
-
-    # --- 3. Criação do Gráfico Plotly ---
-    fig_senioridade = px.line(
-        df_melted_senioridade,
-        x='ano',
-        y='salario_medio',
-        color='nivel_hierarquico',
-        category_orders={'nivel_hierarquico': ordem_decrescente_senioridade},
-        markers=True,
-        symbol='nivel_hierarquico',
-        title='Evolução do Salário Médio por Senioridade (2021-2024)',
-        labels={
-            'ano': 'Ano',
-            'salario_medio': '',
-            'nivel_hierarquico': 'Nível de Senioridade'
-        }
-    )
-    
-    # --- 4. 🆕 ADICIONAR ANOTAÇÕES AUTOMÁTICAS ---
-    # Primeiro ano: valor bruto, anos seguintes: delta
-    for _, row in df_melted_senioridade.iterrows():
-        if row['ano'] == 2021:
-            # Primeiro ano: mostrar valor bruto
-            texto = f"R$ {row['salario_medio']:,.0f}"
-            cor = '#202020'  # Cinza escuro
-            offset_y = 20
-            tamanho_fonte = 14
-        elif pd.notna(row['variacao_pct']) and row['variacao_pct'] != 0:
-            # Anos seguintes: mostrar variação percentual
-            variacao = row['variacao_pct']
-            cor = 'green' if variacao > 0 else 'red'
-            simbolo = '▲' if variacao > 0 else '▼'
-            texto = f"{simbolo} {abs(variacao):.1%}"
-            offset_y = 20 if variacao > 0 else -20
-            tamanho_fonte = 14
-        else:
-            continue
-        
-        fig_senioridade.add_annotation(
-            x=row['ano'],
-            y=row['salario_medio'],
-            text=texto,
-            showarrow=False,
-            yshift=offset_y,
-            font=dict(
-                color=cor,
-                size=tamanho_fonte,
-                weight='bold'
-            ),
-            bgcolor='white',
-            bordercolor=cor,
-            borderwidth=1,
-            borderpad=2
-        )
-    
-    # --- 5. Customização do Hover (Valores Brutos) ---
-    fig_senioridade.update_traces(
-        hovertemplate="<br>".join([
-            "<b>%{fullData.name}</b>",
-            "Ano: %{x}",
-            "Salário Médio: <b>R$ %{y:,.2f}</b>",
-            "<extra></extra>"
-        ]),
-        marker=dict(size=12),
-        line=dict(width=3)
-    )
-    
-    # --- 6. Customização do Layout ---
-    fig_senioridade.update_layout(
-        height=700,
-        showlegend=True,
-        legend=dict(
-            title='Senioridade',
-            orientation='v',
-            yanchor='top',
-            y=1,
-            xanchor='left',
-            x=1.05
-        ),
-        xaxis=dict(
-            tickmode='array',
-            tickvals=[2021, 2022, 2023, 2024],
-            ticktext=['2021', '2022', '2023', '2024'],
-            gridcolor='lightgray',
-            gridwidth=1,
-            title_font=dict(size=20, color='black', weight='bold'),  # Título mais forte
-            tickfont=dict(size=20, color='black', weight='bold'),    # Números mais fortes
-            linecolor='black',                                       # Linha do eixo
-            linewidth=1                                              # Espessura da linha
-        ),
-        yaxis=dict(
-            tickprefix='R$ ',
-            gridcolor='lightgray',
-            gridwidth=1,
-            tickformat=',.0f',
-            title_font=dict(size=16, color='black', weight='bold'),  # Título mais forte
-            tickfont=dict(size=20, color='black', weight='bold'),    # Números mais fortes
-            linecolor='black',                                       # Linha do eixo
-            linewidth=1                                              # Espessura da linha
-        ),
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        font=dict(color='black')
-    )
-    
-    # --- 7. Exibição no Streamlit ---
-    st.plotly_chart(fig_senioridade, use_container_width=True)
-    
-    # --- 8. Storytelling ---
-    st.markdown("""
-    **📊 Insights da Análise:**
-    - **📈 Crescimento Consistente:** Todos os níveis de senioridade apresentaram aumento salarial de 2021 para 2024
-    - **🚀 Salto Sênior:** Senior foi o que mais cresceu em valores absolutos, ultrapassando R$ 14.500 em 2024
-    - **🔄 Vale do Pleno:** Leve queda em 2023 antes da recuperação em 2024, indicando possível estabilização
-    - **💰 Diferença Hierárquica:** Gap salarial entre Pleno e Sênior é maior que entre Júnior e Pleno
-    """)
-    
-    # --- 9. Expander com Tabela ---
-    with st.expander("📋 Ver dados da tabela (Salário Médio por Senioridade)"):
-        tabela_para_exibir = df_evol_salario_senioridade.set_index('ano').style.format("R$ {:,.2f}")
-        st.dataframe(tabela_para_exibir, use_container_width=True)
+  
+  # --- 5. Customização do Hover (Valores Brutos) ---
+  fig_senioridade.update_traces(
+    hovertemplate="<br>".join([
+      "<b>%{fullData.name}</b>",
+      "Ano: %{x}",
+      "Salário Médio: <b>R$ %{y:,.2f}</b>",
+      "<extra></extra>"
+    ]),
+    marker=dict(size=11),
+    line=dict(width=3.5)
+  )
+  
+  # --- 6. Customização do Layout ---
+  fig_senioridade.update_layout(
+    height=600,
+    showlegend=True,
+    legend=dict(
+      title='Senioridade',
+      orientation='v',
+      yanchor='top',
+      y=1,
+      xanchor='left',
+      x=1.05
+    ),
+    xaxis=dict(
+      tickmode='array',
+      tickvals=[2021, 2022, 2023, 2024],
+      ticktext=['2021', '2022', '2023', '2024'],
+      gridcolor='lightgray',
+      gridwidth=1,
+      title_font=dict(size=20, color='black', weight='bold'),  # Título mais forte
+      tickfont=dict(size=20, color='black', weight='bold'),    # Números mais fortes
+      linecolor='black',                                       # Linha do eixo
+      linewidth=1                                              # Espessura da linha
+    ),
+    yaxis=dict(
+      tickprefix='R$ ',
+      gridcolor='lightgray',
+      gridwidth=1,
+      tickformat=',.0f',
+      tickfont=dict(size=20, color='black', weight='bold'),    # Números mais fortes
+    ),
+    plot_bgcolor='white',
+    paper_bgcolor='white',
+    font=dict(color='black')
+  )
+  
+  # --- 7. Exibição no Streamlit ---
+  st.plotly_chart(fig_senioridade, use_container_width=True)
+  
+  # --- 8. Storytelling ---
+  st.markdown("""
+  **📊 Insights da Análise:**
+  - **📈 Crescimento Consistente:** Todos os níveis de senioridade apresentaram aumento salarial de 2021 para 2024
+  - **🚀 Salto Sênior:** Senior foi o que mais cresceu em valores absolutos, ultrapassando R$ 14.500 em 2024
+  - **🔄 Vale do Pleno:** Leve queda em 2023 antes da recuperação em 2024, indicando possível estabilização
+  - **💰 Diferença Hierárquica:** Gap salarial entre Pleno e Sênior é maior que entre Júnior e Pleno
+  """)
+  
+  # --- 9. Expander com Tabela ---
+  with st.expander("📋 Ver dados da tabela (Salário Médio por Senioridade)"):
+    tabela_para_exibir = df_evol_salario_senioridade.set_index('ano').style.format("R$ {:,.2f}")
+    st.dataframe(tabela_para_exibir, use_container_width=True)
 
 else:
-    st.warning("Arquivo '04_analise_evolucao_salario_senioridade.csv' não carregado.")
+  st.warning("Arquivo '04_analise_evolucao_salario_senioridade.csv' não carregado.")
 
 st.divider()
 
@@ -338,7 +337,7 @@ st.subheader("Evolução do Salário Médio por Cargo")
 if df_evol_salario_cargo is not None:
   # --- 1. Preparação dos Dados (Melt) ---
   if 'ano' in df_evol_salario_cargo.columns:
-    df_evol_salario_cargo_plot = df_evol_salario_cargo.copy()
+      df_evol_salario_cargo_plot = df_evol_salario_cargo.copy()
 
   df_melted_cargo = df_evol_salario_cargo_plot.melt(
     id_vars='ano',
@@ -348,7 +347,12 @@ if df_evol_salario_cargo is not None:
   
   df_melted_cargo['ano'] = df_melted_cargo['ano'].astype(int)
   
-  # --- 2. Interatividade ---
+  # --- 2. 🆕 CÁLCULO DOS DELTAS ---
+  df_melted_cargo.sort_values(['grupo_cargo', 'ano'], inplace=True)
+  df_melted_cargo['variacao_pct'] = df_melted_cargo.groupby('grupo_cargo')['salario_medio'].pct_change()
+  df_melted_cargo['variacao_absoluta'] = df_melted_cargo.groupby('grupo_cargo')['salario_medio'].diff()
+  
+  # --- 3. Interatividade ---
   cargos_excluidos = ['Não se aplica/Outra área', 'Outros']
   lista_cargos = sorted(df_melted_cargo['grupo_cargo'].unique())
   cargos_default = [
@@ -361,73 +365,167 @@ if df_evol_salario_cargo is not None:
   st.markdown("**Selecione os cargos para comparar:**")
   
   cargos_selecionados = st.multiselect(
-      label="Cargos", 
-      options=[c for c in lista_cargos if c not in cargos_excluidos],
-      default=cargos_default,
-      label_visibility="collapsed"
+    label="Cargos para comparar",
+    options=[c for c in lista_cargos if c not in cargos_excluidos],
+    default=cargos_default,
+    label_visibility="collapsed"
   )
   
-  # --- 3. Filtragem dos Dados ---
+  # --- 4. 🆕 SELETOR DE DELTAS ---
+  if cargos_selecionados:
+    st.markdown("**Mostrar deltas (variação anual) para:**")
+    
+    # Opções para mostrar deltas (apenas cargos selecionados)
+    opcoes_deltas = ['Selecione Algum'] + cargos_selecionados
+    
+    cargo_com_delta = st.selectbox(
+      label="Selecionar cargo para ver variações",
+      options=opcoes_deltas,
+      index=0,  # 'Selecione Algum' como padrão
+      label_visibility="collapsed"
+    )
+  
+  # --- 5. GRÁFICO PLOTLY (COM HOVER E DELTAS) ---
   if cargos_selecionados:
     df_plotar_cargos = df_melted_cargo[df_melted_cargo['grupo_cargo'].isin(cargos_selecionados)]
     
-    # --- 🆕 NOVO: Ordenar cargos por salário em 2024 (decrescente) ---
-    # Pega os salários de 2024 para cada cargo
+    # Ordenar pelo salário de 2024 (decrescente)
     salarios_2024 = df_plotar_cargos[df_plotar_cargos['ano'] == 2024].set_index('grupo_cargo')['salario_medio']
-    
-    # Ordena os cargos do MAIOR para o MENOR salário
     ordem_decrescente = salarios_2024.sort_values(ascending=False).index.tolist()
-    
-    # --- 4. Criação do Gráfico ---
-    fig_cargo, ax_cargo = plt.subplots(figsize=(10, 4.5))
-    
-    sns.lineplot(
-      data=df_plotar_cargos,
+
+    # Criar gráfico Plotly
+    fig_cargo = px.line(
+      df_plotar_cargos,
       x='ano',
       y='salario_medio',
-      hue='grupo_cargo',
-      style='grupo_cargo',
+      color='grupo_cargo',
+      category_orders={'grupo_cargo': ordem_decrescente},
       markers=True,
-      markersize=8,
-      linewidth=2,
-      ax=ax_cargo,
-      dashes=False,
-      hue_order=ordem_decrescente  # 🆕 Aplica a ordem decrescente
+      symbol='grupo_cargo',  # 🆕 Símbolos diferentes
+      symbol_sequence=['circle', 'square', 'diamond', 'cross', 'x', 'triangle-up'],  # 🆕 Variedade de símbolos
+      title=f'Evolução do Salário Médio por Cargo ({len(cargos_selecionados)} cargos selecionados)',
+      labels={
+        'ano': 'Ano',
+        'salario_medio': '',
+        'grupo_cargo': 'Cargo'
+      }
     )
     
-    # --- 5. Customização ---
-    ax_cargo.set_title(f'({len(cargos_selecionados)} cargos selecionados)', fontsize=12, pad=20)
-    ax_cargo.set_xlabel('Ano', fontsize=12)
-    ax_cargo.set_ylabel("")
-    ax_cargo.grid(axis='y', linestyle='--', alpha=0.4)
-    sns.despine(ax=ax_cargo, left=True, bottom=True)
+    # --- 6. 🆕 ADICIONAR ANOTAÇÕES DE DELTA ---
+    if cargo_com_delta != 'Selecione Algum':
+      dados_delta = df_plotar_cargos[df_plotar_cargos['grupo_cargo'] == cargo_com_delta]
+      
+      for _, row in dados_delta.iterrows():
+        # 🆕 PRIMEIRO ANO: MOSTRAR VALOR BRUTO
+        if row['ano'] == 2021:
+          texto = f"R$ {row['salario_medio']:,.0f}"
+          cor = '#202020'  # Cinza escuro
+          offset_y = 20
+          tamanho_fonte = 15
+        
+        # 🆕 ANOS SEGUINTES: MOSTRAR VARIAÇÃO PERCENTUAL
+        elif pd.notna(row['variacao_pct']) and row['variacao_pct'] != 0:
+          # Calcular posição Y para a anotação
+          y_pos = row['salario_medio']
+          offset_y = 20 if row['variacao_pct'] > 0 else -20
+          
+          # Cor e símbolo baseado na direção
+          cor = 'green' if row['variacao_pct'] > 0 else 'red'
+          simbolo = '▲' if row['variacao_pct'] > 0 else '▼'
+          
+          texto = f"{simbolo} {abs(row['variacao_pct']):.1%}"
+          tamanho_fonte = 15
+      
+        else:
+          continue
+        
+        fig_cargo.add_annotation(
+          x=row['ano'],
+          y=row['salario_medio'],
+          text=texto,
+          showarrow=False,
+          yshift=offset_y,
+          font=dict(
+            color=cor,
+            size=tamanho_fonte,
+            weight='bold'
+          ),
+          bgcolor='white',
+          bordercolor=cor,
+          borderwidth=1,
+          borderpad=1.5
+        )
     
-    try:
-      from matplotlib.ticker import FuncFormatter
-      ax_cargo.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: f'R$ {x:,.0f}'))
-    except ImportError:
-      st.warning("Matplotlib ticker não encontrado.")
-
-    ax_cargo.set_xticks([2021, 2022, 2023, 2024])
+    # --- 7. Customização do Hover ---
+    fig_cargo.update_traces(
+      hovertemplate="<br>".join([
+        "<b>%{fullData.name}</b>",
+        "Ano: %{x}",
+        "Salário Médio: <b>R$ %{y:,.2f}</b>",
+        "<extra></extra>"
+      ]),
+      marker=dict(size=11),
+      line=dict(width=3.5)
+    )
     
-    # 🆕 Legenda já ordenada automaticamente pelo hue_order
-    ax_cargo.legend(
-      title='Cargo',
-      bbox_to_anchor=(1.05, 1), 
-      loc='upper left'
-      )
+    # --- 8. Customização do Layout ---
+    fig_cargo.update_layout(
+      height=600,
+      showlegend=True,
+      legend=dict(
+        title='Cargo',
+        orientation='v',
+        yanchor='top',
+        y=1,
+        xanchor='left',
+        x=1.05
+      ),
+      xaxis=dict(
+        tickmode='array',
+        tickvals=[2021, 2022, 2023, 2024],
+        ticktext=['2021', '2022', '2023', '2024'],
+        gridcolor='lightgray',
+        gridwidth=1,
+        # 🆕 FORTALECER EIXO X
+        title_font=dict(size=20, color='black', weight='bold'),
+        tickfont=dict(size=20, color='black', weight='bold'),
+        linecolor='black',
+        linewidth=2
+      ),
+      yaxis=dict(
+        tickprefix='R$ ',
+        gridcolor='lightgray',
+        gridwidth=1,
+        tickformat=',.0f',
+        # 🆕 FORTALECER EIXO Y
+        tickfont=dict(size=20, color='black', weight='bold'),
+      ),
+      plot_bgcolor='white',
+      paper_bgcolor='white',
+      font=dict(color='black')
+    )
     
-    plt.tight_layout()
+    # --- 9. 🆕 LEGENDA INFORMATIVA ---
+    if cargo_com_delta != 'Selecione Algum':
+      st.info(f"📈 **Mostrando variações anuais para: {cargo_com_delta}** (▲ aumento, ▼ redução)")
+  
+    # Exibir gráfico Plotly
+    st.plotly_chart(fig_cargo, use_container_width=True)
     
-    # --- 6. Exibição ---
-    st.pyplot(fig_cargo, use_container_width=True)
-    plt.close(fig_cargo)
-
-    # --- 7. Tabela de Dados (Expander) ---
-    with st.expander("Ver dados da tabela (Salário Médio por Cargo)"):
-      # Filtra a tabela original para mostrar apenas os cargos selecionados
-      tabela_cargos_filtrada = df_evol_salario_cargo[cargos_selecionados].style.format("R$ {:,.2f}")
-      st.dataframe(tabela_cargos_filtrada, use_container_width=True)
+    # --- 10. Tabela de Dados (Expander) ---
+    with st.expander("📋 Ver dados da tabela (Salário Médio por Cargo)"):
+      tabela_cargos_filtrada = df_plotar_cargos.pivot(
+        index='ano', 
+        columns='grupo_cargo', 
+        values='salario_medio'
+      )[cargos_selecionados]
+      
+      # 🆕 Adicionar coluna de delta se um cargo estiver selecionado
+      if cargo_com_delta != 'Selecione Algum':
+        dados_delta_tabela = df_plotar_cargos[df_plotar_cargos['grupo_cargo'] == cargo_com_delta][['ano', 'variacao_pct']]
+        tabela_cargos_filtrada[f'Delta {cargo_com_delta}'] = dados_delta_tabela.set_index('ano')['variacao_pct']
+      
+      st.dataframe(tabela_cargos_filtrada.style.format("R$ {:,.2f}"), use_container_width=True)
 
   else:
     st.warning("Por favor, selecione pelo menos um cargo para exibir o gráfico.")
@@ -461,123 +559,126 @@ if df_modelo_trabalho_pct is not None:
     colunas_modelo = [col for col in df_modelo_plot.columns if col != 'ano']
     df_modelo_plot[colunas_modelo] = df_modelo_plot[colunas_modelo] / 100.0
     
-    df_modelo_plot = df_modelo_plot.set_index('ano')
-
-    # 🆕 ETAPA DE PREPARAÇÃO CORRIGIDA: Não removemos mais 'Não informado'
-    df_plotar_modelos = df_modelo_plot.copy()
+    # --- 2. Preparação para Plotly (Melt) ---
+    df_melted_modelos = df_modelo_plot.melt(
+        id_vars='ano',
+        var_name='modelo_trabalho',
+        value_name='percentual'
+    )
     
-    # 🆕 ORDEM DA PILHA MANUAL: Definimos a ordem exata da pilha, de baixo para cima
-    # Isso nos dá controle total e corrige o problema da legenda.
-    ordem_stack = [
-        'Remoto', 
-        'Híbrido Flexível', 
-        'Híbrido Fixo', 
-        'Presencial',
-        'Não informado' # Colocamos por último, para que apareça no topo
+    # --- 3. GRÁFICO PLOTLY (ÁREA EMPILHADA COM HOVER) ---
+    # 🆕 REMOVIDO O MULTISELECT - TODOS OS MODELOS SÃO MOSTRADOS
+    
+    # 🆕 ORDEM FIXA DO GRÁFICO (de cima para baixo - como aparece visualmente)
+    ordem_fixa = [
+        'Não informado',     # Topo (primeiro na legenda)
+        'Presencial',        # Abaixo do Não informado
+        'Híbrido Fixo',      # Abaixo do Presencial
+        'Híbrido Flexível',  # Abaixo do Híbrido Fixo
+        'Remoto'             # Base (último na legenda)
     ]
     
-    # Garantir que usamos apenas colunas que existem no DataFrame
-    ordem_stack = [col for col in ordem_stack if col in df_plotar_modelos.columns]
-    
-    # Pega os dados de cada coluna para o stackplot
-    dados_stack = [df_plotar_modelos[col] for col in ordem_stack]
-    labels_stack = [col.replace('_', ' ') for col in ordem_stack]
-    
-    # Cores intuitivas (deve incluir 'Não informado' agora)
+    # Cores intuitivas (mantendo as originais)
     cores = {
         'Remoto': '#1f77b4',           # Azul
         'Híbrido Flexível': '#2ca02c', # Verde
         'Híbrido Fixo': '#ff7f0e',     # Laranja
         'Presencial': "#ce2a2a",       # Vermelho
-        'Não informado': '#7f7f7f'    # Cinza
+        'Não informado': '#7f7f7f'     # Cinza
     }
-    
-    # Garante que só pegamos cores para as colunas que existem
-    cores_stack = [cores[col] for col in ordem_stack]
-    
-    # --- 2. Criação do Gráfico (Matplotlib Stackplot) ---
-    fig, ax = plt.subplots(figsize=(12, 5))
-    
-    # Plotar área empilhada
-    ax.stackplot(
-        df_plotar_modelos.index,
-        *dados_stack,
-        labels=labels_stack,
-        colors=cores_stack, # 🆕 Usa a lista de cores ordenada
-        alpha=0.8
-    )
-    
-    # ==============================================================
-    # ADIÇÃO DOS MARCADORES (Agora funciona para todas as camadas)
-    # ==============================================================
-    
-    # 1. Calcular a soma cumulativa dos dados
-    df_cumulativo = df_plotar_modelos[ordem_stack].cumsum(axis=1) # 🆕 Usa a ordem manual
-    
-    # 2. Loop através de cada categoria (camada)
-    for col in ordem_stack: # 🆕 Usa a ordem manual
-        cor = cores[col] 
-        
-        ax.plot(
-            df_cumulativo.index,
-            df_cumulativo[col],
-            marker='o',
-            linestyle='none',
-            markersize=5,
-            markerfacecolor=cor,
-            markeredgecolor='white',
-            markeredgewidth=1.5
-        )
-    # ==============================================================
-    # FIM DA ADIÇÃO DOS MARCADORES
-    # ==============================================================
 
-    # --- 3. Customização (Usabilidade) ---
-    ax.set_title('Evolução da Distribuição dos Modelos de Trabalho (2021-2024)', fontsize=16, pad=20)
-    ax.set_xlabel('Ano', fontsize=12)
-    ax.set_ylabel("")
-    
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0%}'))
-    ax.grid(axis='y', linestyle='--', alpha=0.4)
-    ax.set_axisbelow(True)
-    ax.set_xticks([2021, 2022, 2023, 2024])
-    ax.set_ylim(0, 1) 
-    
-    # Legenda (com a sua inversão correta)
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(
-        handles=handles[::-1], # 🆕 A sua inversão agora funciona perfeitamente
-        labels=labels[::-1],   
-        title='Modelo de Trabalho',
-        bbox_to_anchor=(1.05, 1),
-        loc='upper left',
-        frameon=True
+    # Criar gráfico de área empilhada
+    fig_modelos = px.area(
+        df_melted_modelos,  # 🆕 Usa todos os dados, sem filtro
+        x='ano',
+        y='percentual',
+        color='modelo_trabalho',
+        category_orders={'modelo_trabalho': ordem_fixa},  # 🆕 Ordem fixa
+        color_discrete_map=cores,
+        title='Evolução da Distribuição dos Modelos de Trabalho (2021-2024)',
+        labels={
+            'ano': 'Ano',
+            'percentual': '',
+            'modelo_trabalho': 'Modelo de Trabalho'
+        }
     )
-    sns.despine(ax=ax)
-    plt.tight_layout()
     
-    # --- 4. Exibição ---
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
+    # 🆕 ADICIONAR MARKERS VISÍVEIS E REDUZIR TRANSPARÊNCIA
+    fig_modelos.update_traces(
+        mode='lines+markers',  # 🆕 Adiciona marcadores às linhas
+        marker=dict(size=11),   # 🆕 Tamanho dos marcadores
+        line=dict(width=3.5),    # 🆕 Espessura das linhas
+    )
     
-    # --- 5. Storytelling ---
-    # (Seu markdown de insights continua perfeito)
-    st.markdown(f"""
+    # --- 4. Customização do Hover ---
+    fig_modelos.update_traces(
+        hovertemplate="<br>".join([
+            "<b>%{fullData.name}</b>",
+            "Ano: %{x}",
+            "Percentual: <b>%{y:.1%}</b>",
+            "<extra></extra>"
+        ])
+    )
+    
+    # --- 5. Customização do Layout ---
+    fig_modelos.update_layout(
+        height=600,
+        showlegend=True,
+        legend=dict(
+            title='Modelo de Trabalho',
+            orientation='v',
+            yanchor='top',
+            y=1,
+            xanchor='left',
+            x=1.05,
+            # 🆕 LEGENDA NA ORDEM INVERSA (para combinar com o gráfico)
+            traceorder='reversed'  # Inverte a ordem da legenda
+        ),
+        xaxis=dict(
+            tickmode='array',
+            tickvals=[2021, 2022, 2023, 2024],
+            ticktext=['2021', '2022', '2023', '2024'],
+            title_font=dict(size=20, color='black', weight='bold'),
+            tickfont=dict(size=20, color='black', weight='bold'),
+            linecolor='black',
+            linewidth=2
+        ),
+        yaxis=dict(
+            tickformat='.0%',
+            gridcolor='lightgray',
+            gridwidth=1,
+            tickfont=dict(size=20, color='black', weight='bold'),
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(color='black')
+    )
+    
+    # Exibir gráfico Plotly
+    st.plotly_chart(fig_modelos, use_container_width=True)
+    
+    # --- 6. Storytelling ---
+    st.markdown("""
     **📈 Insights Principais:**
-    **📉 Queda do Remoto**: Redução de 50.5% (2021) para 42.6% (2024)
-  - **📈 Crescimento Híbrido**: Modelos híbridos saltaram de 26.5% para 35.4%
-  - **🎯 Híbrido Flexível**: Manteve-se como segundo modelo mais popular
-  - **🏢 Presencial Estável**: Manteve-se around 13-15%
-  - **🎭 Mudança Cultural**: Transição clara do remoto para modelos híbridos.
-  - **Crescimento Híbrido**: Os modelos híbridos (Fixo + Flexível) somados cresceram de 26.5% (2021) para 35.4% (2024).
+    - **📉 Queda do Remoto**: Redução de 50.5% (2021) para 42.6% (2024)
+    - **📈 Crescimento Híbrido**: Modelos híbridos saltaram de 26.5% para 35.4%
+    - **🎯 Híbrido Flexível**: Manteve-se como segundo modelo mais popular
+    - **🏢 Presencial Estável**: Manteve-se around 13-15%
+    - **🎭 Mudança Cultural**: Transição clara do remoto para modelos híbridos
+    - **📊 Crescimento Híbrido**: Os modelos híbridos (Fixo + Flexível) somados cresceram de 26.5% (2021) para 35.4% (2024).
+    
+    **💡 Dica**: Clique nos itens da legenda para mostrar/ocultar categorias específicas.
     """)
     
-    # --- 6. Tabela Interativa ---
+    # --- 7. Tabela Interativa ---
     with st.expander("📊 Ver dados detalhados"):
-        st.dataframe(
-            df_modelo_trabalho_pct.set_index('ano').style.format("{:.2f}%"),
-            use_container_width=True
+        tabela_modelos = df_melted_modelos.pivot(
+            index='ano', 
+            columns='modelo_trabalho', 
+            values='percentual'
         )
+        
+        st.dataframe(tabela_modelos.style.format("{:.2%}"), use_container_width=True)
 
 else:
     st.warning("Arquivo '18_analise_evolucao_modelo_trabalho_pct.csv' não carregado.")
@@ -708,35 +809,51 @@ if df_pop_linguagens_pct is not None:
     )
     
     # --- 8. 🆕 ADICIONAR ANOTAÇÕES DE DELTA ---
+    # --- 8. 🆕 ADICIONAR ANOTAÇÕES DE DELTA ---
     if linguagem_com_delta != 'Selecione Alguma':
       dados_delta = df_plotar_linguagens[df_plotar_linguagens['Linguagem'] == linguagem_com_delta]
       
       for _, row in dados_delta.iterrows():
-        if pd.notna(row['delta_pct']) and row['delta_pct'] != 0:
+        # 🆕 PRIMEIRO ANO: MOSTRAR VALOR BRUTO
+        if row['ano'] == 2021:
+          texto = f"{row['popularidade_pct']:.1f}%"
+          cor = '#202020'  # Cinza escuro
+          offset_y = 20
+          tamanho_fonte = 15
+          y_pos = row['popularidade_pct']  # 🆕 DEFINIR y_pos AQUI TAMBÉM
+        
+        # 🆕 ANOS SEGUINTES: MOSTRAR VARIAÇÃO PERCENTUAL
+        elif pd.notna(row['delta_pct']) and row['delta_pct'] != 0:
           # Calcular posição Y para a anotação (acima ou abaixo da linha)
-          y_pos = row['popularidade_pct']
-          offset_y = 15 if row['delta_pct'] > 0 else -20
+          y_pos = row['popularidade_pct']  # 🆕 DEFINIR y_pos AQUI TAMBÉM
+          offset_y = 20 if row['delta_pct'] > 0 else -20
           
           # Cor e símbolo baseado na direção
           cor = 'green' if row['delta_pct'] > 0 else 'red'
           simbolo = '▲' if row['delta_pct'] > 0 else '▼'
           
-          fig_lang.add_annotation(
-            x=row['ano'],
-            y=y_pos,
-            text=f"{simbolo} {abs(row['delta_pct']):.2f}%",
-            showarrow=False,
-            yshift=offset_y,
-            font=dict(
-                color=cor,
-                size=14,
-                weight='bold'
-            ),
-            bgcolor='white',
-            bordercolor=cor,
-            borderwidth=1,
-            borderpad=2
-          )
+          texto = f"{simbolo} {abs(row['delta_pct']):.2f}%"
+          tamanho_fonte = 15
+        
+        else:
+          continue
+        
+        fig_lang.add_annotation(
+          x=row['ano'],
+          y=y_pos,  # 🆕 AGORA y_pos ESTÁ SEMPRE DEFINIDO
+          text=texto,
+          showarrow=False,
+          yshift=offset_y,
+          font=dict(
+              color=cor,
+              size=tamanho_fonte,
+              weight='bold'
+          ),
+          bgcolor='white',
+          bordercolor=cor,
+          borderwidth=1,
+          borderpad=2
+        )
     
     # --- 9. Customização do Hover ---
     fig_lang.update_traces(
@@ -746,13 +863,13 @@ if df_pop_linguagens_pct is not None:
         "Popularidade: <b>%{y:.2f}%</b>",
         "<extra></extra>"
       ]),
-      marker=dict(size=12),
-      line=dict(width=3)
+      marker=dict(size=11),
+      line=dict(width=3.5)
     )
     
     # --- 10. Customização do Layout ---
     fig_lang.update_layout(
-      height=500,
+      height=600,
       showlegend=True,
       legend=dict(
         title='Linguagem',
@@ -810,5 +927,175 @@ if df_pop_linguagens_pct is not None:
 
 else:
   st.warning("Arquivo '08_analise_popularidade_linguagens_pct.csv' não carregado.")
+
+st.divider()
+
+
+
+
+
+
+# ==============================================================================
+# Gráfico 3.2: Popularidade das Ferramentas de BI (com filtro em 2022)
+# ==============================================================================
+st.subheader("Popularidade das Ferramentas de BI (% de Uso)")
+
+if df_pop_bi_pct is not None:
+    # --- 1. Preparação e Tratamento de Anomalias ---
+    if 'ano' not in df_pop_bi_pct.columns:
+        df_bi_plot = df_pop_bi_pct.reset_index()
+    else:
+        df_bi_plot = df_pop_bi_pct.copy()
+
+    # --- 💡 FILTRANDO O ANO DE 2022 ---
+    df_bi_plot_filtrado = df_bi_plot[df_bi_plot['ano'] != 2022].copy()
+    
+    # Adicionamos uma nota de transparência para o usuário
+    st.info("📊 **Nota**: Os dados de 2022 para esta análise não são comparáveis e, portanto, não são exibidos.")
+
+    # --- 2. Preparação para Plotagem (Melt) ---
+    df_melted_bi = df_bi_plot_filtrado.melt(
+        id_vars='ano',
+        var_name='ferramenta_bi',
+        value_name='popularidade_pct'
+    )
+    
+    # --- 3. Interatividade (Filtro Multiselect) ---
+    lista_bi = sorted(df_melted_bi['ferramenta_bi'].unique())
+    
+    # Excluir categorias de "lixo" da seleção
+    bi_excluidos = ['Nenhuma', 'Excel Gsheets', 'Codigo Python R', 'Ferramenta Propria']
+    
+    # 🆕 ORDENAR PELO USO EM 2024 (MAIOR → MENOR)
+    pop_bi_2024_sorted = df_bi_plot_filtrado.set_index('ano').loc[2024].drop(bi_excluidos, errors='ignore').sort_values(ascending=False)
+    
+    bi_default = pop_bi_2024_sorted.head(4).index.tolist() # Sugerir o Top 4
+    
+    st.markdown("**Selecione as ferramentas de BI para comparar:**")
+    bi_selecionadas = st.multiselect(
+        label="Ferramentas de BI",
+        options=[ferramenta for ferramenta in lista_bi if ferramenta not in bi_excluidos],
+        default=bi_default,
+        label_visibility="collapsed"
+    )
+
+    # --- 4. Filtragem e Plotagem (Gráfico de Barras Agrupadas) ---
+    if bi_selecionadas:
+        df_plotar_bi = df_melted_bi[df_melted_bi['ferramenta_bi'].isin(bi_selecionadas)]
+        
+        # 🆕 GARANTIR QUE SÓ TEM OS ANOS 2021, 2023, 2024
+        df_plotar_bi = df_plotar_bi[df_plotar_bi['ano'].isin([2021, 2023, 2024])]
+        
+        # 🆕 CORREÇÃO: ORDENAR FERRAMENTAS POR POPULARIDADE MÉDIA (MAIOR → MENOR)
+        # Calcular a média de popularidade de cada ferramenta em todos os anos
+        popularidade_media = df_plotar_bi.groupby('ferramenta_bi')['popularidade_pct'].mean().sort_values(ascending=False)
+        ordem_ferramentas = popularidade_media.index.tolist()
+        
+        # 🆕 REORDENAR O DATAFRAME PARA GARANTIR A ORDEM CORRETA
+        df_plotar_bi['ferramenta_bi'] = pd.Categorical(
+            df_plotar_bi['ferramenta_bi'], 
+            categories=ordem_ferramentas, 
+            ordered=True
+        )
+        df_plotar_bi = df_plotar_bi.sort_values(['ferramenta_bi', 'ano'])
+        
+        # Criar o gráfico de barras agrupadas
+        fig_bi = px.bar(
+            df_plotar_bi,
+            x='ano',                 # Usar ano diretamente
+            y='popularidade_pct',    # Eixo Y: Popularidade
+            color='ferramenta_bi',   # Cor para cada ferramenta
+            barmode='group',         # Modo "agrupado"
+            category_orders={
+                'ferramenta_bi': ordem_ferramentas,  # 🆕 ORDEM MAIOR → MENOR
+                'ano': [2021, 2023, 2024]  # 🆕 ORDEM ESPECÍFICA DOS ANOS
+            },
+            title=f'Popularidade das Ferramentas de BI Selecionadas ({len(bi_selecionadas)} ferramentas)',
+            labels={
+                'ano': 'Ano',
+                'popularidade_pct': '',
+                'ferramenta_bi': 'Ferramenta de BI'
+            }
+        )
+        
+        # --- 5. Customização (Seguindo nosso padrão) ---
+        fig_bi.update_layout(
+            height=600,  # Altura padronizada
+            showlegend=True,
+            legend=dict(
+                title='Ferramenta de BI',
+                orientation='v',
+                yanchor='top',
+                y=1,
+                xanchor='left',
+                x=1.05,
+                traceorder='normal'  # 🆕 GARANTIR ORDEM DA LEGENDA
+            ),
+            xaxis=dict(
+                type='category',  # 🆕 TRATAR EIXO X COMO CATEGORIA (remove espaçamento)
+                tickmode='array',
+                tickvals=[2021, 2023, 2024],
+                ticktext=['2021', '2023', '2024'],
+                title_font=dict(size=20, color='black', weight='bold'),
+                tickfont=dict(size=20, color='black', weight='bold'),
+                linecolor='black',
+                linewidth=2,
+                gridcolor='lightgray'
+            ),
+            yaxis=dict(
+                ticksuffix='%',
+                gridcolor='lightgray',
+                gridwidth=1,
+                tickfont=dict(size=20, color='black', weight='bold'),
+            ),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(color='black'),
+            # 🆕 REDUZIR ESPAÇAMENTO ENTRE BARRAS
+            bargap=0.15,  # Espaço entre grupos de barras
+            bargroupgap=0.1  # Espaço entre barras do mesmo grupo
+        )
+        
+        # --- 6. Melhorar o hover ---
+        fig_bi.update_traces(
+            hovertemplate="<br>".join([
+                "<b>%{fullData.name}</b>",
+                "Ano: %{x}",
+                "Popularidade: <b>%{y:.2f}%</b>",
+                "<extra></extra>"
+            ]),
+            marker=dict(line=dict(width=1, color='white'))  # Borda branca nas barras
+        )
+
+        # --- 7. Exibição ---
+        st.plotly_chart(fig_bi, use_container_width=True)
+        
+        # --- 8. Storytelling ---
+        st.markdown("""
+        **📈 Insights Principais:**
+        - **🏆 Power BI Lidera**: Mantém-se como a ferramenta mais popular em todos os anos
+        - **📊 Tableau Consistente**: Segunda posição com crescimento estável
+        - **🚀 Looker Studio em Alta**: Crescimento significativo de 2021 para 2023
+        - **🔄 Metabase Estável**: Manteve participação consistente no mercado
+        - **📈 Outras Ferramentas**: Representam uma parcela significativa do mercado
+        - **💡 Dica**: Clique nos itens da legenda para focar em ferramentas específicas
+        """)
+        
+        # --- 9. Tabela de Dados (Expander) ---
+        with st.expander("📋 Ver dados da tabela (% de Popularidade de Ferramentas de BI)"):
+            # 🆕 ORDENAR TABELA PELA MÉDIA TAMBÉM
+            tabela_bi_filtrada = df_plotar_bi.pivot(
+                index='ano', 
+                columns='ferramenta_bi', 
+                values='popularidade_pct'
+            )[ordem_ferramentas]  # 🆕 USAR A ORDEM DEFINIDA
+            
+            st.dataframe(tabela_bi_filtrada.style.format("{:.2f}%"), use_container_width=True)
+
+    else:
+        st.warning("Por favor, selecione pelo menos uma ferramenta de BI para exibir o gráfico.")
+
+else:
+    st.warning("Arquivo '08_analise_popularidade_bi_pct.csv' não carregado.")
 
 st.divider()

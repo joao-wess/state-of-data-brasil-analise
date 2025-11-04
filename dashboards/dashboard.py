@@ -914,12 +914,12 @@ if df_pop_linguagens_pct is not None:
         columns='Linguagem', 
         values='popularidade_pct'
       )[linguagens_selecionadas]
-      
+
       # 🆕 Adicionar coluna de delta se uma linguagem estiver selecionada
       if linguagem_com_delta != 'Selecione Alguma':
         dados_delta_tabela = df_plotar_linguagens[df_plotar_linguagens['Linguagem'] == linguagem_com_delta][['ano', 'delta_pct']]
         tabela_linguagens_filtrada[f'Delta {linguagem_com_delta}'] = dados_delta_tabela.set_index('ano')['delta_pct']
-      
+
       st.dataframe(tabela_linguagens_filtrada.style.format("{:.2f}%"), use_container_width=True)
 
   else:
@@ -1097,5 +1097,203 @@ if df_pop_bi_pct is not None:
 
 else:
     st.warning("Arquivo '08_analise_popularidade_bi_pct.csv' não carregado.")
+
+st.divider()
+
+
+
+
+
+
+
+
+
+
+# ==============================================================================
+# Gráfico 3.3: Popularidade das Plataformas de Cloud (COM DELTAS INTERATIVOS)
+# ==============================================================================
+st.subheader("Popularidade das Plataformas de Cloud (% de Uso)")
+
+if df_pop_cloud_pct is not None:
+    # --- 1. Preparação e Tratamento de Anomalias ---
+    if 'ano' not in df_pop_cloud_pct.columns:
+        df_cloud_plot = df_pop_cloud_pct.reset_index()
+    else:
+        df_cloud_plot = df_pop_cloud_pct.copy()
+
+    # --- 💡 FILTRANDO O ANO DE 2023 (Dados Nulos) 💡 ---
+    df_cloud_plot_filtrado = df_cloud_plot[df_cloud_plot['ano'] != 2023].copy()
+    
+    st.info("📊 **Nota**: Os dados de 2023 para esta análise não estão disponíveis no mesmo formato e, portanto, não são exibidos.")
+
+    # --- 2. Preparação para Plotagem (Melt) ---
+    df_melted_cloud = df_cloud_plot_filtrado.melt(
+        id_vars='ano',
+        var_name='plataforma_cloud',
+        value_name='popularidade_pct'
+    )
+    
+    # --- 3. 🆕 CÁLCULO DOS DELTAS (Pontos Percentuais) ---
+    df_melted_cloud.sort_values(['plataforma_cloud', 'ano'], inplace=True)
+    # .diff() calcula a diferença absoluta (ex: 29.72 - 28.80 = 0.92 p.p.)
+    df_melted_cloud['delta_pp'] = df_melted_cloud.groupby('plataforma_cloud')['popularidade_pct'].diff()
+    
+    # --- 4. Interatividade (Filtro Multiselect) ---
+    lista_cloud = sorted(df_melted_cloud['plataforma_cloud'].unique())
+    cloud_default = ['AWS', 'GCP', 'AZURE', 'ON PREMISE']
+    
+    st.markdown("**Selecione as plataformas para comparar:**")
+    cloud_selecionadas = st.multiselect(
+        label="Plataformas Cloud",
+        options=lista_cloud,
+        default=cloud_default,
+        label_visibility="collapsed"
+    )
+    
+    # --- 5. 🆕 SELETOR DE DELTAS ---
+    if cloud_selecionadas:
+      st.markdown("**Mostrar deltas (variação anual) para:**")
+      opcoes_deltas_cloud = ['Selecione Alguma'] + cloud_selecionadas
+      
+      cloud_com_delta = st.selectbox(
+        label="Selecionar plataforma para ver variações",
+        options=opcoes_deltas_cloud,
+        index=0,  # 'Selecione Alguma' como padrão
+        label_visibility="collapsed",
+        key='select_cloud_delta' # 🆕 Chave única para este selectbox
+      )
+
+    # --- 6. Filtragem e Plotagem (Gráfico de Linhas) ---
+    if cloud_selecionadas:
+        df_plotar_cloud = df_melted_cloud[df_melted_cloud['plataforma_cloud'].isin(cloud_selecionadas)]
+        
+        # Ordenar pela popularidade de 2024 para uma legenda mais limpa
+        pop_2024 = df_plotar_cloud[df_plotar_cloud['ano'] == 2024]
+        ordem_legenda_cloud = pop_2024.sort_values(by='popularidade_pct', ascending=False)['plataforma_cloud'].tolist()
+
+        # Criar gráfico Plotly
+        fig_cloud = px.line(
+            df_plotar_cloud,
+            x='ano',
+            y='popularidade_pct',
+            color='plataforma_cloud',
+            category_orders={'plataforma_cloud': ordem_legenda_cloud},
+            markers=True,
+            title=f'Popularidade das Plataformas Cloud Selecionadas',
+            labels={
+                'ano': 'Ano',
+                'popularidade_pct': '',
+                'plataforma_cloud': 'Plataforma'
+            }
+        )
+        
+        # --- 7. 🆕 ADICIONAR ANOTAÇÕES DE DELTA ---
+        if cloud_com_delta != 'Selecione Alguma':
+          dados_delta_cloud = df_plotar_cloud[df_plotar_cloud['plataforma_cloud'] == cloud_com_delta]
+          
+          for _, row in dados_delta_cloud.iterrows():
+            # PRIMEIRO ANO (2021): MOSTRAR VALOR BRUTO
+            if row['ano'] == 2021:
+              texto = f"{row['popularidade_pct']:.1f}%"
+              cor = '#202020'  # Cinza escuro
+              offset_y = 20
+              tamanho_fonte = 14
+            
+            # ANOS SEGUINTES: MOSTRAR VARIAÇÃO EM PONTOS PERCENTUAIS (p.p.)
+            elif pd.notna(row['delta_pp']) and row['delta_pp'] != 0:
+              offset_y = 20 if row['delta_pp'] > 0 else -20
+              cor = 'green' if row['delta_pp'] > 0 else 'red'
+              simbolo = '▲' if row['delta_pp'] > 0 else '▼'
+              texto = f"{simbolo} {abs(row['delta_pp']):.2f}%." # p.p. = pontos percentuais
+              tamanho_fonte = 14
+          
+            else:
+              continue
+            
+            fig_cloud.add_annotation(
+              x=row['ano'],
+              y=row['popularidade_pct'],
+              text=texto,
+              showarrow=False,
+              yshift=offset_y,
+              font=dict(color=cor, size=tamanho_fonte, weight='bold'),
+              bgcolor='white',
+              bordercolor=cor,
+              borderwidth=1,
+              borderpad=1.5
+            )
+        
+        # --- 8. Customização (Plotly) ---
+        fig_cloud.update_layout(
+            height=500,
+            showlegend=True,
+            legend=dict(
+                title='Plataforma',
+                orientation='v',
+                yanchor='top',
+                y=1,
+                xanchor='left',
+                x=1.05
+            ),
+            xaxis=dict(
+                tickmode='array',
+                tickvals=[2021, 2022, 2024], # Anos que temos dados
+                ticktext=['2021', '2022', '2024'],
+                title_font=dict(size=18, color='black', weight='bold'),
+                tickfont=dict(size=18, color='black', weight='bold'),
+                linecolor='black',
+                linewidth=1,
+                gridcolor='lightgray'
+            ),
+            yaxis=dict(
+                ticksuffix='%',
+                gridcolor='lightgray',
+                gridwidth=1,
+                tickfont=dict(size=18, color='black', weight='bold'),
+            ),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(color='black')
+        )
+
+        # Atualizar traços e hover
+        fig_cloud.update_traces(
+            marker=dict(size=11),
+            line=dict(width=3.5),
+            hovertemplate="<br>".join([
+                "<b>%{fullData.name}</b>",
+                "Ano: %{x}",
+                "Popularidade: <b>%{y:.2f}%</b>",
+                "<extra></extra>"
+            ])
+        )
+        
+        # --- 9. 🆕 LEGENDA INFORMATIVA ---
+        if cloud_com_delta != 'Selecione Alguma':
+          st.info(f"📈 **Mostrando variações anuais para: {cloud_com_delta}** (▲ aumento, ▼ redução em %.)")
+        
+        # --- 10. Exibição ---
+        st.plotly_chart(fig_cloud, use_container_width=True)
+        
+        # --- 11. Tabela de Dados (Expander) ---
+        with st.expander("📋 Ver dados da tabela (% de Popularidade de Plataformas Cloud)"):
+            tabela_cloud_filtrada = df_plotar_cloud.pivot(
+                index='ano', 
+                columns='plataforma_cloud', 
+                values='popularidade_pct'
+            )[cloud_selecionadas]
+            
+            # 🆕 Adicionar coluna de delta se uma plataforma estiver selecionada
+            if cloud_com_delta != 'Selecione Alguma':
+                dados_delta_tabela = df_plotar_cloud[df_plotar_cloud['plataforma_cloud'] == cloud_com_delta][['ano', 'delta_pp']]
+                tabela_cloud_filtrada[f'Delta {cloud_com_delta} (p.p.)'] = dados_delta_tabela.set_index('ano')['delta_pp']
+            
+            st.dataframe(tabela_cloud_filtrada.style.format("{:.2f}%", na_rep="N/A"), use_container_width=True)
+
+    else:
+        st.warning("Por favor, selecione pelo menos uma plataforma para exibir o gráfico.")
+
+else:
+    st.warning("Arquivo '09_analise_popularidade_cloud_pct.csv' não carregado.")
 
 st.divider()

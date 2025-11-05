@@ -1225,7 +1225,7 @@ if df_pop_cloud_pct is not None:
         
         # --- 8. Customização (Plotly) ---
         fig_cloud.update_layout(
-            height=500,
+            height=600,
             showlegend=True,
             legend=dict(
                 title='Plataforma',
@@ -1295,5 +1295,144 @@ if df_pop_cloud_pct is not None:
 
 else:
     st.warning("Arquivo '09_analise_popularidade_cloud_pct.csv' não carregado.")
+
+st.divider()
+
+
+
+
+
+
+
+
+
+
+# ==============================================================================
+# Gráfico 1.3: Salário MEDIANO por Nível de Ensino (Interativo com Hover de Contagem)
+# ==============================================================================
+st.subheader("O Nível de Ensino Impacta o Salário?")
+st.markdown("Use os filtros para explorar o salário mediano por nível de ensino, filtrando por ano e senioridade.")
+
+if df_salario_ensino_senioridade_stats is not None and df_salario_ensino_stats is not None:
+    # --- 1. Preparação dos Dados ---
+    df_ensino_plot_detalhado = df_salario_ensino_senioridade_stats.copy()
+    df_ensino_plot_geral = df_salario_ensino_stats.copy()
+
+    # --- 2. Interatividade (Filtros) ---
+    col_filtro_ano, col_filtro_senioridade = st.columns(2)
+    
+    with col_filtro_ano:
+        anos_disponiveis = sorted(df_ensino_plot_geral['ano'].unique(), reverse=True)
+        ano_selecionado_ensino = st.selectbox(
+            label="Selecione o Ano:",
+            options=anos_disponiveis,
+            index=0, 
+            key='select_ano_ensino'
+        )
+        
+    with col_filtro_senioridade:
+        niveis_senioridade = sorted(df_ensino_plot_detalhado['nivel_hierarquico'].unique())
+        nivel_selecionado_ensino = st.selectbox(
+            label="Selecione a Senioridade:",
+            options=['Todos'] + niveis_senioridade, 
+            index=0,
+            key='select_senioridade_ensino'
+        )
+
+    # --- 3. Filtragem dos Dados ---
+    if nivel_selecionado_ensino == 'Todos':
+        df_para_plotar = df_ensino_plot_geral[df_ensino_plot_geral['ano'] == ano_selecionado_ensino].copy()
+        coluna_valor = 'salario_mediana'
+        titulo_grafico = f"Salário Mediano Geral por Nível de Ensino ({ano_selecionado_ensino})"
+    else:
+        df_para_plotar = df_ensino_plot_detalhado[
+            (df_ensino_plot_detalhado['ano'] == ano_selecionado_ensino) &
+            (df_ensino_plot_detalhado['nivel_hierarquico'] == nivel_selecionado_ensino)
+        ].copy()
+        coluna_valor = 'salario_mediana'
+        titulo_grafico = f"Salário Mediano por Nível de Ensino ({nivel_selecionado_ensino} - {ano_selecionado_ensino})"
+        
+    # --- 4. Ordenação (Princípio da Organização) ---
+    ordem_ensino_cat = [
+        'Não tenho graduação formal',
+        'Estudante de Graduação',
+        'Graduação/Bacharelado',
+        'Pós-graduação',
+        'Mestrado',
+        'Doutorado ou Phd',
+        'Prefiro não informar',
+        'Não Informado'
+    ]
+    df_para_plotar['nivel_ensino_cat'] = df_para_plotar['nivel_ensino_cat'].replace('Doutorado', 'Doutorado ou Phd')
+    df_para_plotar['nivel_ensino_cat'] = pd.Categorical(
+        df_para_plotar['nivel_ensino_cat'],
+        categories=[cat for cat in ordem_ensino_cat if cat in df_para_plotar['nivel_ensino_cat'].unique()],
+        ordered=True
+    )
+    df_para_plotar = df_para_plotar.sort_values('nivel_ensino_cat')
+    
+    # --- 5. Criação do Gráfico (Gráfico de Barras) ---
+    if not df_para_plotar.empty:
+        fig_ensino = px.bar(
+            df_para_plotar,
+            x='nivel_ensino_cat',
+            y=coluna_valor,
+            title=titulo_grafico,
+            labels={'nivel_ensino_cat': 'Nível de Ensino', coluna_valor: 'Salário Mediano (R$)'},
+            text=coluna_valor,
+            custom_data=['contagem'] # 💡 Coluna de contagem adicionada para o hover
+        )
+        
+        # --- 6. Customização (Plotly) ---
+        fig_ensino.update_layout(
+            height=600, 
+            xaxis_title=None,
+            yaxis_title='',
+            yaxis_ticksuffix=' ',
+            yaxis_tickprefix='R$ ',
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(color='black'),
+            xaxis=dict(linecolor='black', linewidth=1, tickfont=dict(size=15, color='black')),
+            yaxis=dict(
+                gridcolor='lightgray',
+                tickfont=dict(size=16, color='black'),
+            )
+        )
+        
+        # 💡 Hover e Texto da Barra ATUALIZADOS
+        fig_ensino.update_traces(
+            texttemplate='R$ %{y:,.0f}', 
+            textposition='outside',
+            hovertemplate="<br>".join([
+                "<b>%{x}</b>",
+                "Salário Mediano: <b>R$ %{y:,.0f}</b>",
+                "Contagem de Respondentes: <b>%{customdata[0]}</b>", # Mostra a contagem
+                "<extra></extra>"
+            ])
+        )
+        
+        # --- 7. Exibição ---
+        st.plotly_chart(fig_ensino, use_container_width=True) # Exibindo o gráfico
+        
+        # --- 8. 💡 NOVO STORYTELLING 💡 ---
+        st.markdown(f"""
+        **📈 Insights Principais (Filtros: {ano_selecionado_ensino}, {nivel_selecionado_ensino}):**
+
+        1.  **Para Sênior, a Experiência Nivela o Jogo:**. A mediana salarial é de **R$ 14k** para Graduação, Pós-graduação, Mestrado e Doutorado. Isso sugere fortemente que, no nível Sênior, a **experiência e as entregas superam o peso da formação acadêmica adicional**.
+
+        2.  **O Mestrado é o Grande Diferencial no Nível Pleno:**. O salário mediano salta de **R$ 7k** (Graduação/Pós) para **R$ 10k** (Mestrado/Doutorado). É aqui que o título de Mestre parece ter o maior impacto financeiro, criando um "degrau" salarial.
+
+        3.  **Na Entrada (Júnior). A mediana é de **R$ 5k** para quase todos os níveis (Graduação, Pós, Mestrado e Doutorado). Isso indica que, na porta de entrada, o mercado nivela os salários e a capacidade de "começar" não é tão dependente da sua formação avançada.
+        """)
+        
+        # --- 9. Tabela de Dados (Expander) ---
+        with st.expander("📋 Ver dados detalhados da seleção"):
+            st.dataframe(df_para_plotar.style.format({'salario_medio': "R$ {:,.2f}", 'salario_mediana': "R$ {:,.2f}"}), use_container_width=True)
+    else:
+        st.warning(f"Nenhum dado encontrado para os filtros selecionados.")
+
+else:
+    st.warning("Arquivos de análise de Nível de Ensino não carregados.")
 
 st.divider()

@@ -1553,8 +1553,8 @@ if df_salario_genero_senioridade_stats is not None:
                 st.warning(f"Não foi possível calcular o Pay Gap para '{nivel_selecionado_gen} / {ano_selecionado_gen}' (dados ausentes).")
         
         except IndexError:
-             # Este erro acontece se o filtro não retornar 'Masculino' ou 'Feminino'
-             st.warning(f"Não foi possível calcular o Pay Gap para '{nivel_selecionado_gen} / {ano_selecionado_gen}' (dados ausentes para um dos gêneros).")
+            # Este erro acontece se o filtro não retornar 'Masculino' ou 'Feminino'
+            st.warning(f"Não foi possível calcular o Pay Gap para '{nivel_selecionado_gen} / {ano_selecionado_gen}' (dados ausentes para um dos gêneros).")
         except Exception as e:
             st.warning(f"Erro inesperado ao calcular o Pay Gap: {e}")
 

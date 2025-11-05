@@ -1436,3 +1436,136 @@ else:
     st.warning("Arquivos de análise de Nível de Ensino não carregados.")
 
 st.divider()
+
+
+
+
+
+
+
+# ==============================================================================
+# Gráfico 1.4: Comparação Salarial por Gênero (usando a MÉDIA)
+# ==============================================================================
+st.subheader("Comparativo Salarial: Masculino vs. Feminino")
+st.markdown("Use os filtros para comparar o salário **médio** lado a lado por gênero, ano e senioridade.")
+
+if df_salario_genero_senioridade_stats is not None:
+    # --- 1. Preparação dos Dados ---
+    df_genero_plot = df_salario_genero_senioridade_stats.copy()
+
+    # --- 2. Interatividade (Filtros) ---
+    col_filtro_ano_gen, col_filtro_senioridade_gen = st.columns(2)
+    
+    with col_filtro_ano_gen:
+        anos_disponiveis_gen = sorted(df_genero_plot['ano'].unique(), reverse=True)
+        ano_selecionado_gen = st.selectbox(
+            label="Selecione o Ano:",
+            options=anos_disponiveis_gen,
+            index=0, 
+            key='select_ano_genero'
+        )
+        
+    with col_filtro_senioridade_gen:
+        niveis_senioridade_gen = sorted(df_genero_plot['nivel_hierarquico'].unique())
+        nivel_selecionado_gen = st.selectbox(
+            label="Selecione a Senioridade:",
+            options=niveis_senioridade_gen, 
+            index=len(niveis_senioridade_gen)-1, # Padrão para "Sênior"
+            key='select_senioridade_genero'
+        )
+
+    # --- 3. Filtragem dos Dados ---
+    df_para_plotar_gen = df_genero_plot[
+        (df_genero_plot['ano'] == ano_selecionado_gen) &
+        (df_genero_plot['nivel_hierarquico'] == nivel_selecionado_gen)
+    ].copy()
+    
+    df_para_plotar_gen = df_para_plotar_gen[df_para_plotar_gen['genero'].isin(['Masculino', 'Feminino'])]
+        
+    # --- 4. Criação do Gráfico (Gráfico de Barras) ---
+    if not df_para_plotar_gen.empty:
+        
+        fig_genero = px.bar(
+            df_para_plotar_gen,
+            x='genero',
+            y='salario_medio', # Usando a Média
+            color='genero', 
+            color_discrete_map={'Masculino': '#1f77b4', 'Feminino': '#ff7f0e'},
+            title=f"Salário MÉDIO por Gênero ({nivel_selecionado_gen} - {ano_selecionado_gen})",
+            labels={'genero': 'Gênero', 'salario_medio': 'Salário Médio (R$)'},
+            text='salario_medio', 
+            custom_data=['contagem', 'salario_mediana']
+        )
+        
+        # --- 5. Customização (Plotly) ---
+        fig_genero.update_layout(
+            height=500,
+            xaxis_title=None,
+            yaxis_title='',
+            yaxis_ticksuffix=' ',
+            yaxis_tickprefix='R$ ',
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(color='black'),
+            xaxis=dict(linecolor='black', linewidth=1, tickfont=dict(size=16, color='black', weight='bold')),
+            yaxis=dict(gridcolor='lightgray', tickfont=dict(size=16, color='black')),
+            showlegend=False 
+        )
+        
+        fig_genero.update_traces(
+            texttemplate='R$ %{y:,.0f}',
+            textposition='outside',
+            hovertemplate="<br>".join([
+                "<b>%{x}</b>",
+                "Salário Médio: <b>R$ %{y:,.0f}</b>",
+                "Salário Mediano: <b>R$ %{customdata[1]:,.0f}</b>",
+                "Contagem: <b>%{customdata[0]}</b>",
+                "<extra></extra>"
+            ])
+        )
+        
+        # --- 6. Exibição ---
+        st.plotly_chart(fig_genero, use_container_width=True)
+        
+        # --- 7. 💡 CÁLCULO DO PAY GAP (MÉDIA) COM LÓGICA DINÂMICA 💡 ---
+        try:
+            # 💡 CORREÇÃO: Usar .values[0] para pegar o valor pela posição, não pelo índice .get(0)
+            media_m = df_para_plotar_gen[df_para_plotar_gen['genero'] == 'Masculino']['salario_medio'].values[0]
+            media_f = df_para_plotar_gen[df_para_plotar_gen['genero'] == 'Feminino']['salario_medio'].values[0]
+            
+            if pd.notna(media_m) and pd.notna(media_f) and media_m > 0:
+                # Calcula o gap (pode ser positivo ou negativo)
+                gap_pct = ((media_m - media_f) / media_m) * 100
+                
+                # 💡 LÓGICA DINÂMICA PARA A MENSAGEM (como você sugeriu) 💡
+                valor_abs_gap = abs(gap_pct)
+                
+                if gap_pct > 0.5: # Gap positivo (Homens ganham mais)
+                    comparacao_texto = f"foi **{valor_abs_gap:.1f}% menor ↓** que a masculina."
+                elif gap_pct < -0.5: # Gap negativo (Mulheres ganham mais)
+                    comparacao_texto = f"foi **{valor_abs_gap:.1f}% maior ↑** que a masculina."
+                else: # Gap próximo de zero
+                    comparacao_texto = "foi **praticamente idêntico** ao masculino."
+                
+                st.info(f"💡 **Pay Gap:** Para **{nivel_selecionado_gen}** em **{ano_selecionado_gen}**, o salário médio feminino {comparacao_texto}")
+            
+            else:
+                st.warning(f"Não foi possível calcular o Pay Gap para '{nivel_selecionado_gen} / {ano_selecionado_gen}' (dados ausentes).")
+        
+        except IndexError:
+             # Este erro acontece se o filtro não retornar 'Masculino' ou 'Feminino'
+             st.warning(f"Não foi possível calcular o Pay Gap para '{nivel_selecionado_gen} / {ano_selecionado_gen}' (dados ausentes para um dos gêneros).")
+        except Exception as e:
+            st.warning(f"Erro inesperado ao calcular o Pay Gap: {e}")
+
+        # --- 8. Tabela de Dados (Expander) ---
+        with st.expander("📋 Ver todos os dados de gênero para esta seleção"):
+            st.dataframe(df_para_plotar_gen.style.format({'salario_medio': "R$ {:,.2f}", 'salario_mediana': "R$ {:,.2f}"}), use_container_width=True)
+    
+    else:
+        st.warning(f"Nenhum dado encontrado para os filtros selecionados.")
+
+else:
+    st.warning("Arquivos de análise de Gênero não carregados.")
+
+st.divider()

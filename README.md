@@ -16,35 +16,42 @@ Estamos utilizando **Python 3.12.3**.
 git clone https://github.com/<seu-usuario>/analise_state_of_data.git
 cd analise_state_of_data
 ```
+
 ### 2. Criar e ativar ambiente virtual
 
 - Criar o ambiente
+
 ```bash
 python -m venv .venv
 ```
 
 - Ativar o ambiente:
 - Linux/MacOS
+
 ```bash
 source .venv/bin/activate
 ```
+
 - Windows (PowerShell)
+
 ```bash
 .venv\Scripts\Activate
 ```
 
 ### 3. Instalar as dependências
+
 pip install -r requirements.txt
 
-- se precisar adicionar novas dependências
+## esse comando faz com que você tenha todas as dependências e rode sem problemas o projeto
 
-  
-pip install nome-da-biblioteca
+### 4. Rodando o Dashboard Interativo
 
+Com o ambiente ativado e as dependências instaladas, você pode iniciar o dashboard interativo.
 
-pip freeze > requirements.txt
+O `dashboard.py` na raiz do projeto é o arquivo principal que executa o aplicativo Streamlit.
 
----
+````bash
+streamlit run dashboard.py
 
 ## 🗂 Estrutura do Projeto
 ```bash
@@ -62,7 +69,7 @@ analise_state_of_data/
 ├── dashboards/
 ├── .gitignore
 └── README.md
-```
+````
 
 ### Explicação das pastas:
 
@@ -74,10 +81,11 @@ analise_state_of_data/
 
 - **`notebooks/`**  
   Espaço para exploração inicial com **Jupyter Notebooks**.  
-  Cada integrante pode ter seu próprio notebook ou criar notebooks separados por etapas, exemplo:  
-  - `01_exploracao_inicial.ipynb`  
-  - `02_limpeza_2021.ipynb`  
-  - `03_merge_final.ipynb`  
+  Cada integrante pode ter seu próprio notebook ou criar notebooks separados por etapas, exemplo:
+
+  - `01_exploracao_inicial.ipynb`
+  - `02_limpeza_2021.ipynb`
+  - `03_merge_final.ipynb`
 
 - **`src/`**  
   Pasta destinada ao **código fonte**.  
@@ -87,7 +95,13 @@ analise_state_of_data/
   Nossa "caixa de ferramentas". Guardaremos funções auxiliares que podem ser reaproveitadas em vários notebooks.
 
 - **`dashboards/`**  
-  Local para salvar imagens, configurações e arquivos gerados para o dashboard final.
+  Local onde está salvo o dashboard inicial e legado - antes da implementação do streamlit com o pages.
+
+- **`pages/`**
+  Local onde ficam as páginas do streamlit com as outras análises
+
+- **`dashboard.py`**
+  Arquivo principal do streamlit para visualização da análise/
 
 - **`README.md`**  
   Este arquivo. Serve como guia inicial do projeto: objetivo, instalação e instruções de uso.

@@ -12,6 +12,24 @@ st.set_page_config(
   layout="wide"
 )
 
+# fonte das KPI's
+st.markdown("""
+<style>
+[data-testid="stMetricLabel"] p {
+  font-size: 18px !important;
+}
+
+[data-testid="stMetricValue"] {
+  font-size: 36px !important;
+  font-weight: 600 !important;
+}
+[data-testid="stMetricDelta"] {
+  font-size: 22px !important;
+  font-weight: 500 !important;
+}
+</style>
+""" , unsafe_allow_html=True)
+
 BASE_PATH = Path.cwd()
 DASHBOARD_DATA_DIR = BASE_PATH / 'notebook' / 'dashboard_data'
 

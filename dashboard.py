@@ -24,7 +24,7 @@ st.markdown("""
   font-weight: 600 !important;
 }
 [data-testid="stMetricDelta"] {
-  font-size: 22px !important;
+  font-size: 20px !important;
   font-weight: 500 !important;
 }
 </style>
@@ -470,9 +470,6 @@ if df_modelo_trabalho_pct is not None:
     - **🎯 Híbrido Flexível**: Manteve-se como segundo modelo mais popular
     - **🏢 Presencial Estável**: Manteve-se around 13-15%
     - **🎭 Mudança Cultural**: Transição clara do remoto para modelos híbridos
-    - **📊 Crescimento Híbrido**: Os modelos híbridos (Fixo + Flexível) somados cresceram de 26.5% (2021) para 35.4% (2024).
-    
-    **💡 Dica**: Clique nos itens da legenda para mostrar/ocultar categorias específicas.
     """)
     
     # --- 7. Tabela Interativa ---

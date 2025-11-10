@@ -9,8 +9,6 @@ from pathlib import Path
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Análise de Remuneração", layout="wide")
-st.title("📈 Análise de Remuneração")
-st.markdown("Vamos detalhar como os salários evoluíram e como eles se comparam entre diferentes grupos.")
 
 # --- 2. CAMINHOS E FUNÇÃO DE CARREGAMENTO---
 BASE_PATH = Path.cwd() #Sobe um nível para a raiz do projeto
